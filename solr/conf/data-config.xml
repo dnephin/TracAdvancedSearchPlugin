@@ -1,0 +1,22 @@
+<!--
+  Data Import Configuration
+
+-->
+<dataConfig>
+
+	<dataSource 
+		type="JdbcDataSource" 
+		driver="com.mysql.jdbc.Driver" 
+		url="jdbc:mysql://localhost/trac12" 
+		user="tracuser"
+		password="password"
+		batchSize="1000"
+	/>
+
+	<document>
+		<entity name="wiki" query="select * from wiki">
+
+		</entity>
+	</document>
+
+</dataConfig>
