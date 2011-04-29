@@ -1,0 +1,16 @@
+
+
+Trac Advanced Search Plugin
+README
+
+
+
+__Remove Search button__
+
+To disable the old search add the following to <project_env>/conf/trac.ini.
+Your trac.ini may already have a components section.
+
+[components]                                                                                                                   
+trac.search.web_ui.SearchModule = disabled  
+
+
