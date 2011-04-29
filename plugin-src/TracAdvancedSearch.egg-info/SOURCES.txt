@@ -1,0 +1,9 @@
+setup.py
+TracAdvancedSearch.egg-info/PKG-INFO
+TracAdvancedSearch.egg-info/SOURCES.txt
+TracAdvancedSearch.egg-info/dependency_links.txt
+TracAdvancedSearch.egg-info/entry_points.txt
+TracAdvancedSearch.egg-info/top_level.txt
+TracAdvancedSearch.egg-info/trac_plugin.txt
+advsearch/__init__.py
+advsearch/advsearch.py

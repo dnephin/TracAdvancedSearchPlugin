@@ -5,11 +5,10 @@
 
 from trac.core import Component
 from trac.core import implements
-from trac.core import Markup
-
 from trac.web.chrome import INavigationContributor
 from trac.web.main import IRequestHandler
-from trac.util import escape, Markup
+from trac.util import escape
+from trac.util.html import html
 
 class AdvancedSearchPlugin(Component):
 	implements(INavigationContributor, IRequestHandler)
@@ -21,7 +20,7 @@ class AdvancedSearchPlugin(Component):
 	def get_navigation_items(self, req):
 		yield ('mainnav', 
 			'advsearch', 
-			Markup('<a href="%s">Advanced Search</a>' % (self.env.href.helloworld()))
+			html.A('Advanced Search', href=self.env.href.advsearch())
 		)
 
 	# IRequestHandler methods
