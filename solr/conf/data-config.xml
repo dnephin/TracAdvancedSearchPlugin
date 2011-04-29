@@ -14,7 +14,9 @@
 	/>
 
 	<document>
-		<entity name="wiki" query="select * from wiki">
+		<entity 
+			name="wiki" 
+			query="select name, version, from_unixtime(time/1000000) as time, author, text, comment from wiki">
 
 		</entity>
 	</document>
