@@ -6,6 +6,8 @@ This module defines a Trac extension point for the advanced search backend.
 See TracAdvancedSearchBackend for more details.
 """
 
+from collections import defaultdict
+from operator import itemgetter
 import pkg_resources
 import re
 
@@ -18,14 +20,19 @@ from trac.wiki.api import IWikiSyntaxProvider
 from trac.core import Component
 from trac.core import ExtensionPoint
 from trac.core import implements
+from trac.core import Interface 
 from trac.util import escape
 from trac.util.html import html
+from trac.util.presentation import Paginator
 from trac.util.translation import _
-from trac.web.chrome import add_link, add_stylesheet, add_warning
+from trac.web.chrome import add_stylesheet, add_warning
 
 
 class IAdvSearchBackend(Interface):
 	"""Interface to provides a search service."""
+
+	def get_name():
+		"""Return the name of this backend."""
 
 	def upsert_document(doc):
 		"""
@@ -77,7 +84,9 @@ class AdvancedSearchPlugin(Component):
 	
 	providers = ExtensionPoint(IAdvSearchBackend)
 
+	# TODO: take from source sources 
 	SOURCE_FILTERS = ('wiki', 'ticket')
+	DEFAULT_PER_PAGE = 10
 
 	# INavigationContributor methods
 	def get_active_navigation_item(self, req):
@@ -109,55 +118,86 @@ class AdvancedSearchPlugin(Component):
 		req.perm.assert_permission('SEARCH_VIEW')
 
 		query = req.args.get('q')
+		try:
+			per_page = int(req.args.getfirst('per_page', 
+				self.DEFAULT_PER_PAGE))
+		except ValueError:
+			per_page = self.DEFAULT_PER_PAGE
+
+		try:
+			page = int(req.args.getfirst('page', 1))
+		except ValueError:
+			page = 1
+
 		data = {
 			'source': req.args.getlist('source_filters'),
 			'author': req.args.getlist('author_filters'),
+			# TODO: default values for date
 			'date_start': req.args.getfirst('date_range_start'),
 			'date_end': req.args.getfirst('date_range_end'),
-			'q': query, 
+			'q': query,
+			'start_points': StartPoints.parse_args(req.args, self.providers)
 		}
 
 		# perform query using backend
 		result_map = {}
 		for provider in self.providers:
-			result_map[provider.__class__.__name__] = provider.query_backend(data)
+			result_map[provider.get_name()] = provider.query_backend(data)
 
 		data['source_filters'] = self._get_filter_dicts(self.SOURCE_FILTERS, req.args)
 		data['quickjump'] = None
-		data['results'], data['start_points'] = self._merge_results(result_map)
+		data['per_page'] = per_page 
+		results = self._merge_results(result_map, per_page)
+		# TODO: add these to the html page
+		data['start_points'] = StartPoints.format(results)
+		data['results'] = Paginator(
+			results, 
+			page=page-1, 
+			max_per_page=per_page, 
+			# TODO: get total count from search backend as well
+			num_items=None
+		)
 
+		# look for warnings
+		if not len(self.providers):
+			add_warning(req, _('No advanced search providers found. ' +
+				'You must register a search backend.')
+			)
+
+		if not results:
+			add_warning(req, _('No results.'))
+			
 		add_stylesheet(req, 'common/css/search.css')
 		return 'advsearch.html', data, None
 
-	def _merge_results(self, result_map):
+	def _merge_results(self, result_map, per_page):
 		"""
 		Merge results from multiple sources by score in each result. Return
-		a tuple of (results, start_points).  Results is the list of search
-		results to display to the user, and start points are the offsets
-		to use on the next page of results.  These are only needed when
-		multiple providers return results.
+		the search results to display to the user
 		
 		Example:
-		(
-			// Results
-			[
-				{
-					'title': 'Trac Help', 
-					'href': 'http://...', 
-					'date': '2011-04-20 12:34:00', 
-					'author': 'admin',
-					'summary': '...'
-				},
-				...
-			],
-			// Start points
+		[
 			{
-				'PySolrBackend': 8,
-				'SphinxBackend': 4,
-			}
-		)
+				'title': 'Trac Help', 
+				'href': 'http://...', 
+				'date': '2011-04-20 12:34:00', 
+				'author': 'admin',
+				'summary': '...'
+			},
+			...
+		]
 		"""
+		# add backend_name as a key to each result and merge lists
+		all_results = []
+		for backend_name, results in result_map.iteritems():
+			for result_dict in results:
+				result_dict['backend_name'] = backend_name
+			all_results.extend(results)
+				
+		# sort and keep track of end points
+		all_results.sort(key=itemgetter('score'), reverse=True)
 
+		return all_results[:per_page]
 
 
 	def _get_filter_dicts(self, filter_list, req_args):
@@ -181,3 +221,37 @@ class AdvancedSearchPlugin(Component):
 	def get_link_resolvers(self):
 		# TODO
 		return []
+
+
+class StartPoints(object):
+	"""Format and parse start points for search."""
+
+	FORMAT_STRING = 'provider_start_point:%s'
+
+	@classmethod
+	def parse_args(cls, req_args, provider_list):
+		"""Return a dict of start points by provider from request args."""
+		start_points = {}
+		for provider in provider_list:
+			start_points[provider.get_name()] = req_args.getfirst(
+				cls.FORMAT_STRING % provider, 
+				0
+			)
+		return start_points
+
+	@classmethod
+	def format(cls, results):
+		"""Return dict of start_point name to value."""
+		start_points = defaultdict(int)
+		for result in results: 
+			start_points[result['backend_name']] += 1
+
+		return [
+			{
+				'name': cls.FORMAT_STRING % name, 
+				'value': value
+			} 
+			for (name, value) in start_points.iteritems()
+		]
+
+
