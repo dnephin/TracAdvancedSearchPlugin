@@ -49,8 +49,10 @@ class IAdvSearchBackend(Interface):
 		and return a list of dicts with the results. Backends should ignore any
 		criteria it does not know how to deal with.
 
-		Returns a dict with keys: name, score, source, text.  When multiple 
-		providers return results for a source score is used to order the results.
+		Returns a tuple of (total result count, list of results).  Each results
+		is a dict with keys: title, score, source, summary, date, author. 
+		When multiple providers return results for a source score is used to 
+		order the results.
 
 		Example:
 		criteria = {
@@ -61,15 +63,20 @@ class IAdvSearchBackend(Interface):
 			'date_end': '2011-04-30',
 		}
 
-		return [
-			{
-				'name': 'TracHelp', 
-				'score': 0.876, 
-				'source': 'wiki', 
-				'text': '==Trac Help== ....' 
-			},
-			...
-		]
+		return (
+			200, 
+			[
+				{
+					'title': 'TracHelp', 
+					'score': 0.876, 
+					'source': 'wiki', 
+					'summary': '==Trac Help== ....'
+					'date': '2011-02-34 23:34',
+					'author': 'admin',
+				},
+				...
+			]
+		)
 		"""
 
 
@@ -141,22 +148,31 @@ class AdvancedSearchPlugin(Component):
 
 		# perform query using backend
 		result_map = {}
+		total_count = 0
 		for provider in self.providers:
-			result_map[provider.get_name()] = provider.query_backend(data)
+			result_count, result_list = provider.query_backend(data)
+			total_count += result_count
+			result_map[provider.get_name()] = result_list
 
 		data['source_filters'] = self._get_filter_dicts(self.SOURCE_FILTERS, req.args)
+		# TODO: remove or implement quickjump
 		data['quickjump'] = None
 		data['per_page'] = per_page 
 		results = self._merge_results(result_map, per_page)
+		self._add_href_to_results(results)
 		# TODO: add these to the html page
 		data['start_points'] = StartPoints.format(results)
 		data['results'] = Paginator(
 			results, 
 			page=page-1, 
 			max_per_page=per_page, 
-			# TODO: get total count from search backend as well
-			num_items=None
+			num_items=total_count
 		)
+		print "LOOOK AT ME."
+		print data['results'].has_next_page
+		print data['results'].has_more_pages
+		print data['results'].has_previous_page
+
 
 		# look for warnings
 		if not len(self.providers):
@@ -199,6 +215,11 @@ class AdvancedSearchPlugin(Component):
 
 		return all_results[:per_page]
 
+	def _add_href_to_results(self, results):
+		"""Add an href key/value to each result dict based on source."""
+		# TODO: build href from source
+		for result in results:
+			result['href'] = '/wiki/%s' % (result['title'])
 
 	def _get_filter_dicts(self, filter_list, req_args):
 		"""Map filters to filter dicts for the frontend."""
