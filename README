@@ -5,7 +5,17 @@ README
 
 
 
-__Remove Search button__
+
+
+
+
+__ Requirements __
+
+easy_install httplib2
+easy_install pysolr
+
+
+__ Remove Search button __
 
 To disable the old search add the following to <project_env>/conf/trac.ini.
 Your trac.ini may already have a components section.

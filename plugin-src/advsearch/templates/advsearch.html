@@ -5,7 +5,7 @@
 	  xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="layout.html" />
   <head>
-	<title>Search<py:if test="query"> Results</py:if></title>
+	<title>Search<py:if test="q"> Results</py:if></title>
   </head>
   <body>
 	<div id="content" class="search">
@@ -13,13 +13,13 @@
 	  <h1><label for="q">${_('Advanced Search')}</label></h1>
 	  <form id="fullsearch" action="${href.advsearch()}" method="get">
 		<p>
-		  <input type="text" id="q" name="q" size="40" value="${query}" />
+		  <input type="text" id="q" name="q" size="40" value="${q}" />
 		  <input type="hidden" name="noquickjump" value="1" />
 		  <input type="submit" value="${_('Search')}" />
 		</p>
 
 		<fieldset>
-		  <legend>Source(s):</legend>
+		  <legend>${_('Source(s)')}:</legend>
 		  <py:for each="filter in source_filters">
 			<input type="checkbox" id="${filter.name}" name="${filter.name}"
 				   checked="${filter.active and 'checked' or None}" />
@@ -28,26 +28,26 @@
 		</fieldset>
 
 		<fieldset>
-		  <legend>Author(s):</legend>
-		  <py:for each="filter in author_filters">
-		  	<input type="text" name="author_filters" value="${filter}" />
+		  <legend>${_('Author(s)')}:</legend>
+		  <py:for each="filter in author">
+		  	<input type="text" name="author" value="${filter}" />
 		  </py:for>
-		  <input type="text" name="author_filters" />
+		  <input type="text" name="author" />
 		</fieldset>
 
 		<fieldset>
-		  <legend>Date Range:</legend>
-		  <label for="date_range_start">Start</label>
-		  <input type="text" name="date_range_start" value="${date_range_start}" />
-		  <label for="date_range_end">End</label>
-		  <input type="text" name="date_range_end" value="${date_range_end}" />
+		  <legend>${_('Date Range')}:</legend>
+		  <label for="date_start">Start</label>
+		  <input type="text" name="date_start" value="${date_start}" />
+		  <label for="date_end">End</label>
+		  <input type="text" name="date_end" value="${date_end}" />
 		</fieldset>
 
 	  </form>
 
 	  <py:if test="results or quickjump"><hr />
 		<h2 py:if="results">
-		  Results <span class="numresults">(${results.displayed_items()})</span>
+		  Results <span class="numresults">(${len(results)})</span>
 		</h2>
 		<xi:include py:with="paginator = results" href="page_index.html" />
 		<div>
