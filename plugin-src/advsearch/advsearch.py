@@ -26,6 +26,8 @@ class AdvancedSearchPlugin(Component):
 		IWikiSyntaxProvider,
 		ITemplateProvider,
 	)
+	
+	SOURCE_FILTERS = ('wiki', 'ticket')
 
 	# INavigationContributor methods
 	def get_active_navigation_item(self, req):
@@ -47,13 +49,37 @@ class AdvancedSearchPlugin(Component):
 		# TODO: add /search if search module is disabled
 		return re.match(r'/advsearch?', req.path_info) is not None
 
+
+
 	def process_request(self, req):
-		req.send_response(200)
-		abuffer = 'Hello world!'
-		req.send_header('Content-Type', 'text/plain')
-		req.send_header('Content-length', str(len(abuffer)))
-		req.end_headers()
-		req.write(abuffer)
+		"""
+		Implements IRequestHandler.process_request
+
+		Build a dict of search criteria from the user and request results from 
+		the active AdvancedSearchBackend.
+		"""
+		req.perm.assert_permission('SEARCH_VIEW')
+
+		query = req.args.get('q')
+		data = {
+			'source_filters': self._get_filter_dicts(self.SOURCE_FILTERS, req.args),
+			'author_filters': req.args.getlist('author_filters'),
+			'date_range_start': req.args.getfirst('date_range_start'),
+			'date_range_end': req.args.getfirst('date_range_end'),
+			'query': query, 
+			'quickjump': None, 
+			'results': []
+		}
+
+		add_stylesheet(req, 'common/css/search.css')
+		return 'advsearch.html', data, None
+
+	@classmethod
+	def _get_filter_dicts(cls, filter_list, req_args):
+		return [
+			{'name': filter, 'active': req_args.get(filter)}
+			for filter in filter_list
+		]
 
 	# ITemplateProvider methods
 	def get_htdocs_dirs(self):
