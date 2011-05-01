@@ -13,6 +13,7 @@ import simplejson
 
 from genshi.builder import tag
 from trac.perm import IPermissionRequestor
+from trac.ticket.api import ITicketChangeListener
 from trac.web.chrome import INavigationContributor
 from trac.web.chrome import ITemplateProvider
 from trac.web.main import IRequestHandler
@@ -35,9 +36,10 @@ class AdvancedSearchPlugin(Component):
 		INavigationContributor, 
 		IPermissionRequestor,
 		IRequestHandler,
+		ITemplateProvider,
+		ITicketChangeListener,
 		IWikiChangeListener,
 		IWikiSyntaxProvider,
-		ITemplateProvider,
 	)
 	
 	providers = ExtensionPoint(IAdvSearchBackend)
@@ -236,6 +238,46 @@ class AdvancedSearchPlugin(Component):
 	def wiki_page_renamed(self, page, old_name):
 		self._delete_wiki_page(old_name)
 		self._update_wiki_page(page)
+
+	# ITicketChangeListener methods
+	def ticket_created(self, ticket):
+		from trac.ticket.api import TicketSystem 
+		print TicketSystem(self.env).get_ticket_fields()
+		print ticket
+		print ticket.values
+		doc = {
+			'id': 'ticket_%s' % ticket.id,
+			'ticket_id': ticket.id,
+			'source': 'ticket',
+			'author': ticket['reporter'],
+			'ticket_version': ticket['version'],
+			'name': ticket['summary'],
+			'text': ticket['description'],
+		}
+		for prop in (
+			'type', 
+			'time', 
+			'changetime', 
+			'component', 
+			'severity', 
+			'priority',
+			'owner',
+			'milestone',
+			'status',
+			'resolution',
+			'keywords'
+		):
+			doc[prop] = ticket[prop]
+		for provider in self.providers:
+			provider.upsert_document(doc)
+		
+	def ticket_deleted(ticket):
+		identifier = 'ticket_%s' % (ticket.id)
+		for provider in self.providers:
+			provider.delete_document(identifier)
+
+	def ticket_changed(self, ticket, comment, author, old_values):
+		self.ticket_created(ticket)
 
 
 class StartPoints(object):
