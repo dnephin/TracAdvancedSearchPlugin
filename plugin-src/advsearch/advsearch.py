@@ -160,7 +160,7 @@ class AdvancedSearchPlugin(Component):
 		data['per_page'] = per_page 
 		results = self._merge_results(result_map, per_page)
 		self._add_href_to_results(results)
-		# TODO: add these to the html page
+		# TODO: add these to paginator links
 		data['start_points'] = StartPoints.format(results)
 		data['results'] = Paginator(
 			results, 
@@ -168,11 +168,8 @@ class AdvancedSearchPlugin(Component):
 			max_per_page=per_page, 
 			num_items=total_count
 		)
-		print "LOOOK AT ME."
-		print data['results'].has_next_page
-		print data['results'].has_more_pages
-		print data['results'].has_previous_page
 
+		# TODO: pagination next/prev links
 
 		# look for warnings
 		if not len(self.providers):
@@ -210,9 +207,8 @@ class AdvancedSearchPlugin(Component):
 				result_dict['backend_name'] = backend_name
 			all_results.extend(results)
 				
-		# sort and keep track of end points
+		# sort and return results for the page
 		all_results.sort(key=itemgetter('score'), reverse=True)
-
 		return all_results[:per_page]
 
 	def _add_href_to_results(self, results):
