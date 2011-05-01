@@ -50,7 +50,7 @@ class PySolrSearchBackEnd(Component):
 		# add all fields
 		q['token_text'] = criteria.get('q')
 		# TODO : add to schema
-#		q['source'] = self._string_from_input(criteria.get('source'))
+		q['source'] = self._string_from_filters(criteria.get('source'))
 		q['author'] = self._string_from_input(criteria.get('author'))
 		q['time'] = self._date_from_range(
 			criteria.get('date_start'),
@@ -64,13 +64,14 @@ class PySolrSearchBackEnd(Component):
 
 		results = self.conn.search(" AND ".join(q_pairs), **params)
 		for result in results:
-			result['title'] = result['id']
+			result['title'] = result['name']
+			# TODO: better summary
 			result['summary'] = result['text'][:200]
-			result['source'] = 'wiki'
 			result['date'] = self._date_from_solr(result['time'])
 			del result['time']
 			del result['id']
 			del result['text']
+			del result['name']
 
 		return (results.hits, results.docs)
 
@@ -88,6 +89,17 @@ class PySolrSearchBackEnd(Component):
 			return "(%s)" % (" OR ".join([v for v in value if v]))
 
 		return value
+
+	def _string_from_filters(self, filter_list):
+		if not filter_list:
+			return None
+
+		name_list = [f['name'] for f in filter_list if f['active']]
+		if not name_list:
+			return None
+
+		# add filters that are set as active
+		return "(%s)" % (" OR ".join(name_list))
 
 	def _date_from_range(self, start, end):
 		"""Return a date range in solr query syntax."""

@@ -86,7 +86,7 @@ class AdvancedSearchPlugin(Component):
 			page = 1
 
 		data = {
-			'source': req.args.getlist('source_filters'),
+			'source': self._get_filter_dicts(req.args),
 			'author': [auth for auth in req.args.getlist('author') if auth],
 			'date_start': req.args.getfirst('date_start'),
 			'date_end': req.args.getfirst('date_end'),
@@ -105,10 +105,6 @@ class AdvancedSearchPlugin(Component):
 			total_count += result_count
 			result_map[provider.get_name()] = result_list
 
-		data['source_filters'] = self._get_filter_dicts(
-			self.SOURCE_FILTERS, 
-			req.args
-		)
 		data['per_page'] = per_page
 		data['page'] = page
 		results = self._merge_results(result_map, per_page)
@@ -183,11 +179,11 @@ class AdvancedSearchPlugin(Component):
 				result['href'] = self.env.href.wiki(result['title'])
 			# TODO: build href from other sources
 
-	def _get_filter_dicts(self, filter_list, req_args):
+	def _get_filter_dicts(self, req_args):
 		"""Map filters to filter dicts for the frontend."""
 		return [
 			{'name': filter, 'active': req_args.get(filter)}
-			for filter in filter_list
+			for filter in self.SOURCE_FILTERS
 		]
 
 	# ITemplateProvider methods

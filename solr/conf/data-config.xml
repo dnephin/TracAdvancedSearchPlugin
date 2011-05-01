@@ -16,7 +16,16 @@
 	<document>
 		<entity 
 			name="wiki" 
-			query="select name, version, from_unixtime(time/1000000) as time, author, text, comment from wiki">
+			query="select 
+				name, 
+				version, 
+				from_unixtime(time/1000000) as time, 
+				author, 
+				text, 
+				comment,
+				concat('wiki_',name) as id,
+				'wiki' as source
+				from wiki">
 
 		</entity>
 	</document>

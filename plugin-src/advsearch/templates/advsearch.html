@@ -20,9 +20,9 @@
 
 		<fieldset>
 		  <legend>${_('Source(s)')}:</legend>
-		  <py:for each="filter in source_filters">
+		  <py:for each="filter in source">
 			<input type="checkbox" id="${filter.name}" name="${filter.name}"
-				   checked="${filter.active and 'checked' or None}" />
+				   checked="${'checked' if filter.active else None}" />
 			<label for="${filter.name}">${filter.name}</label>
 		  </py:for>
 		</fieldset>
