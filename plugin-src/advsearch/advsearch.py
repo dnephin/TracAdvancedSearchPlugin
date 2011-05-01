@@ -15,69 +15,18 @@ from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor
 from trac.web.chrome import ITemplateProvider
 from trac.web.main import IRequestHandler
+from trac.wiki.api import IWikiChangeListener
 from trac.wiki.api import IWikiSyntaxProvider
 
 from trac.core import Component
 from trac.core import ExtensionPoint
 from trac.core import implements
-from trac.core import Interface 
 from trac.util import escape
 from trac.util.html import html
 from trac.util.presentation import Paginator
 from trac.util.translation import _
 from trac.web.chrome import add_stylesheet, add_warning, add_link, add_script
-
-
-class IAdvSearchBackend(Interface):
-	"""Interface to provides a search service."""
-
-	def get_name():
-		"""Return the name of this backend."""
-
-	def upsert_document(doc):
-		"""
-		Accepts a dictionary doc which contains all the data about an updated
-		document (wiki page, ticket, etc) to be inserted or updated in the 
-		backend index. The keys of the dict should match the field names in
-		the database.
-		"""
-
-
-	def query_backend(criteria):
-		"""
-		Given a dictionary of criteria, perform a query in the search backend
-		and return a list of dicts with the results. Backends should ignore any
-		criteria it does not know how to deal with.
-
-		Returns a tuple of (total result count, list of results).  Each results
-		is a dict with keys: title, score, source, summary, date, author. 
-		When multiple providers return results for a source score is used to 
-		order the results. 
-
-		Example:
-		criteria = {
-			'q': 'trac help',
-			'author: ['admin', 'joe'],
-			'source': ['wiki'],
-			'date_start': '2011-04-01',
-			'date_end': '2011-04-30',
-		}
-
-		return (
-			200, 
-			[
-				{
-					'title': 'TracHelp', 
-					'score': 0.876, 
-					'source': 'wiki', 
-					'summary': '==Trac Help== ....'
-					'date': '2011-02-34 23:34',
-					'author': 'admin',
-				},
-				...
-			]
-		)
-		"""
+from interface import IAdvSearchBackend
 
 
 class AdvancedSearchPlugin(Component):
@@ -85,13 +34,13 @@ class AdvancedSearchPlugin(Component):
 		INavigationContributor, 
 		IPermissionRequestor,
 		IRequestHandler,
+		IWikiChangeListener,
 		IWikiSyntaxProvider,
 		ITemplateProvider,
 	)
 	
 	providers = ExtensionPoint(IAdvSearchBackend)
 
-	# TODO: take from source sources 
 	SOURCE_FILTERS = ('wiki', 'ticket')
 	DEFAULT_PER_PAGE = 10
 
@@ -250,11 +199,41 @@ class AdvancedSearchPlugin(Component):
 
 	# IWikiSyntaxProvider methods
 	def get_wiki_syntax(self):
+		# TODO
 		return []
 		
 	def get_link_resolvers(self):
 		# TODO
 		return []
+
+
+	# IWikiChangeListener methods
+	def _update_wiki_page(self, page):
+		doc = {
+			'source': 'wiki',
+		}
+		for prop in ('name', 'version', 'time', 'author', 'text', 'comment'):
+			doc[prop] = getattr(page, prop)
+		for provider in self.providers:
+			provider.upsert_document(doc)
+
+	def _delete_wiki_page(self, name):
+		identifier = 'wiki_%s' % (name)
+		for provider in self.providers:
+			provider.delete_document(identifier)
+
+	wiki_page_added = _update_wiki_page
+	wiki_page_version_deleted = _update_wiki_page
+	wiki_page_deleted = lambda page: _delete_wiki_page(page.name)
+
+	def wiki_page_changed(self, page, version, t, comment, author, ipnr):
+		self._update_wiki_page(page)
+
+	def wiki_page_renamed(self, page, old_name):
+		self._delete_wiki_page(old_name)
+		self._update_wiki_page(page)
+		
+		
 
 
 class StartPoints(object):

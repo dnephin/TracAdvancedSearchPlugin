@@ -8,7 +8,7 @@ import pysolr
 from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
-from advsearch import IAdvSearchBackend
+from interface import IAdvSearchBackend
 
 
 class PySolrSearchBackEnd(Component):
@@ -31,7 +31,11 @@ class PySolrSearchBackEnd(Component):
 
 	def upsert_document(self, doc):
 		# TODO:
-		pass
+		print "upsert"
+
+	def delete_document(self, identifier):
+		# TODO:
+		print "delete"
 
 	def query_backend(self, criteria):
 		"""Send a query to solr."""
