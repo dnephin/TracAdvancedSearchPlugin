@@ -7,5 +7,11 @@ setup(name=PACKAGE,
 	version=VERSION,
 	packages=['advsearch'],
 	entry_points={'trac.plugins': '%s = advsearch' % PACKAGE},
-	package_data={'advsearch': ['templates/*.html']},
+	package_data={
+		'advsearch': [
+			'templates/*.html',
+			'htdocs/css/*.css',
+			'htdocs/js/*.js'
+		]
+	},
 )

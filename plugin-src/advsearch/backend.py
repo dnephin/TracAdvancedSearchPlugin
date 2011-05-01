@@ -5,23 +5,28 @@ import datetime
 import itertools
 import pysolr
 
+from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
 from advsearch import IAdvSearchBackend
 
 
-# TODO: connect handling ?
-# TODO: configure connection string to trac.ini
-conn = pysolr.Solr('http://localhost:8983/solr/')
-
-class PySolrBackEnd(Component):
+class PySolrSearchBackEnd(Component):
 	"""AdvancedSearchBackend that uses pysolr lib to search Solr."""
 	implements(IAdvSearchBackend)
 
 	SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 	INPUT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+	def __init__(self):
+		solr_url = self.config.get('pysolr_search_backend', 'solr_url', None)
+		timeout = self.config.getfloat('pysolr_search_backend', 'timeout', 30)
+		if not solr_url:
+			raise ConfigurationError('PySolrSearchBackend must be configured in trac.ini')
+		self.conn = pysolr.Solr(solr_url, timeout=timeout)
 	
 	def get_name(self):
+		"""Return friendly name for this IAdvSearchBackend provider."""
 		return self.__class__.__name__
 
 	def upsert_document(self, doc):
@@ -53,7 +58,7 @@ class PySolrBackEnd(Component):
 		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
 			q_pairs.append("%s: %s" % (k, v))
 
-		results = conn.search(" AND ".join(q_pairs), **params)
+		results = self.conn.search(" AND ".join(q_pairs), **params)
 		for result in results:
 			result['title'] = result['id']
 			result['summary'] = result['text'][:200]
@@ -65,8 +70,8 @@ class PySolrBackEnd(Component):
 
 		return (results.hits, results.docs)
 
-
 	def _date_from_solr(self, date_string):
+		"""Return a human friendly date from solr date string."""
 		date = datetime.datetime.strptime(date_string, self.SOLR_DATE_FORMAT)
 		return date.strftime(self.INPUT_DATE_FORMAT)
 

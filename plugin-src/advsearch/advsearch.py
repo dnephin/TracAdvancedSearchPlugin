@@ -10,6 +10,7 @@ from collections import defaultdict
 from operator import itemgetter
 import pkg_resources
 import re
+import simplejson
 
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor
@@ -25,7 +26,7 @@ from trac.util import escape
 from trac.util.html import html
 from trac.util.presentation import Paginator
 from trac.util.translation import _
-from trac.web.chrome import add_stylesheet, add_warning
+from trac.web.chrome import add_stylesheet, add_warning, add_link
 
 
 class IAdvSearchBackend(Interface):
@@ -157,11 +158,10 @@ class AdvancedSearchPlugin(Component):
 		data['source_filters'] = self._get_filter_dicts(self.SOURCE_FILTERS, req.args)
 		# TODO: remove or implement quickjump
 		data['quickjump'] = None
-		data['per_page'] = per_page 
+		data['per_page'] = per_page
+		data['page'] = page
 		results = self._merge_results(result_map, per_page)
 		self._add_href_to_results(results)
-		# TODO: add these to paginator links
-		data['start_points'] = StartPoints.format(results)
 		data['results'] = Paginator(
 			results, 
 			page=page-1, 
@@ -169,7 +169,16 @@ class AdvancedSearchPlugin(Component):
 			num_items=total_count
 		)
 
-		# TODO: pagination next/prev links
+		# pagination next/prev links
+		if data['results'].has_next_page:
+			start_points = StartPoints.format(results)
+			next_href = "javascript:next_page(%s)" % start_points
+			add_link(req, 'next', next_href, _('Next Page'))
+
+		if data['results'].has_previous_page:
+			prev_href = "javascript:history.go(-1)"
+			add_link(req, 'prev', prev_href, _('Previous Page'))
+	
 
 		# look for warnings
 		if not len(self.providers):
@@ -181,6 +190,7 @@ class AdvancedSearchPlugin(Component):
 			add_warning(req, _('No results.'))
 			
 		add_stylesheet(req, 'common/css/search.css')
+		add_stylesheet(req, 'advsearch/css/advsearch.css')
 		return 'advsearch.html', data, None
 
 	def _merge_results(self, result_map, per_page):
@@ -213,9 +223,10 @@ class AdvancedSearchPlugin(Component):
 
 	def _add_href_to_results(self, results):
 		"""Add an href key/value to each result dict based on source."""
-		# TODO: build href from source
 		for result in results:
-			result['href'] = '/wiki/%s' % (result['title'])
+			if result['source'] == 'wiki':
+				result['href'] = self.env.href.wiki(result['title'])
+			# TODO: build href from other sources
 
 	def _get_filter_dicts(self, filter_list, req_args):
 		"""Map filters to filter dicts for the frontend."""
@@ -226,7 +237,7 @@ class AdvancedSearchPlugin(Component):
 
 	# ITemplateProvider methods
 	def get_htdocs_dirs(self):
-		return []
+		return [('advsearch', pkg_resources.resource_filename(__name__, 'htdocs'))]
 
 	def get_templates_dirs(self):
 		return [pkg_resources.resource_filename(__name__, 'templates')]
@@ -263,12 +274,13 @@ class StartPoints(object):
 		for result in results: 
 			start_points[result['backend_name']] += 1
 
-		return [
-			{
-				'name': cls.FORMAT_STRING % name, 
-				'value': value
-			} 
-			for (name, value) in start_points.iteritems()
-		]
-
+		return simplejson.dumps(
+			[
+				{
+					'name': cls.FORMAT_STRING % name,
+					'value': value
+				} 
+				for (name, value) in start_points.iteritems()
+			]
+		)
 
