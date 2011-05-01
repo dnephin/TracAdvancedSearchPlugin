@@ -53,8 +53,6 @@ class PySolrBackEnd(Component):
 		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
 			q_pairs.append("%s: %s" % (k, v))
 
-		# TODO: function query
-		
 		results = conn.search(" AND ".join(q_pairs), **params)
 		for result in results:
 			result['title'] = result['id']
@@ -77,8 +75,8 @@ class PySolrBackEnd(Component):
 		if not value:
 			return None
 
-		if type(value) in (list, typle):
-			return "(%s)" % (" OR ".join(value))
+		if type(value) in (list, tuple):
+			return "(%s)" % (" OR ".join([v for v in value if v]))
 
 		return value
 

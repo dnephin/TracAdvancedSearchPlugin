@@ -52,7 +52,7 @@ class IAdvSearchBackend(Interface):
 		Returns a tuple of (total result count, list of results).  Each results
 		is a dict with keys: title, score, source, summary, date, author. 
 		When multiple providers return results for a source score is used to 
-		order the results.
+		order the results. 
 
 		Example:
 		criteria = {
@@ -138,10 +138,10 @@ class AdvancedSearchPlugin(Component):
 
 		data = {
 			'source': req.args.getlist('source_filters'),
-			'author': req.args.getlist('author'),
+			'author': [auth for auth in req.args.getlist('author') if auth],
 			# TODO: default values for date
-			'date_start': req.args.getfirst('date_range_start'),
-			'date_end': req.args.getfirst('date_range_end'),
+			'date_start': req.args.getfirst('date_start'),
+			'date_end': req.args.getfirst('date_end'),
 			'q': query,
 			'start_points': StartPoints.parse_args(req.args, self.providers)
 		}
