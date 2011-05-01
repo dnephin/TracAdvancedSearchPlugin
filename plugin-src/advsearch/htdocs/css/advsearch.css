@@ -2,9 +2,14 @@
 
 #fullsearch {
 	width: 450px;
+	clear: both;
 }
 
 #fullsearch fieldset {
 	width: 250px;
 	float: left;
+}
+
+.clear {
+	clear: both;
 }

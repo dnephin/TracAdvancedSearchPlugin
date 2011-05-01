@@ -6,7 +6,6 @@ This module defines a Trac extension point for the advanced search backend.
 See TracAdvancedSearchBackend for more details.
 """
 
-from collections import defaultdict
 from operator import itemgetter
 import pkg_resources
 import re
@@ -26,7 +25,7 @@ from trac.util import escape
 from trac.util.html import html
 from trac.util.presentation import Paginator
 from trac.util.translation import _
-from trac.web.chrome import add_stylesheet, add_warning, add_link
+from trac.web.chrome import add_stylesheet, add_warning, add_link, add_script
 
 
 class IAdvSearchBackend(Interface):
@@ -140,14 +139,16 @@ class AdvancedSearchPlugin(Component):
 		data = {
 			'source': req.args.getlist('source_filters'),
 			'author': [auth for auth in req.args.getlist('author') if auth],
-			# TODO: default values for date
 			'date_start': req.args.getfirst('date_start'),
 			'date_end': req.args.getfirst('date_end'),
 			'q': query,
 			'start_points': StartPoints.parse_args(req.args, self.providers)
 		}
 
-		# perform query using backend
+		if not query:
+			return self._send_response(req, data)
+
+		# perform query using backend if q is set
 		result_map = {}
 		total_count = 0
 		for provider in self.providers:
@@ -155,9 +156,10 @@ class AdvancedSearchPlugin(Component):
 			total_count += result_count
 			result_map[provider.get_name()] = result_list
 
-		data['source_filters'] = self._get_filter_dicts(self.SOURCE_FILTERS, req.args)
-		# TODO: remove or implement quickjump
-		data['quickjump'] = None
+		data['source_filters'] = self._get_filter_dicts(
+			self.SOURCE_FILTERS, 
+			req.args
+		)
 		data['per_page'] = per_page
 		data['page'] = page
 		results = self._merge_results(result_map, per_page)
@@ -171,26 +173,30 @@ class AdvancedSearchPlugin(Component):
 
 		# pagination next/prev links
 		if data['results'].has_next_page:
-			start_points = StartPoints.format(results)
+			start_points = StartPoints.format(results, data['start_points'])
 			next_href = "javascript:next_page(%s)" % start_points
 			add_link(req, 'next', next_href, _('Next Page'))
 
 		if data['results'].has_previous_page:
 			prev_href = "javascript:history.go(-1)"
 			add_link(req, 'prev', prev_href, _('Previous Page'))
-	
+		
+		return self._send_response(req, data)
+
+	def _send_response(self, req, data):
+		"""Send the response."""
 
 		# look for warnings
 		if not len(self.providers):
 			add_warning(req, _('No advanced search providers found. ' +
-				'You must register a search backend.')
-			)
+				'You must register a search backend.'))
 
-		if not results:
+		if data.get('results') and not len(data['results']):
 			add_warning(req, _('No results.'))
 			
 		add_stylesheet(req, 'common/css/search.css')
 		add_stylesheet(req, 'advsearch/css/advsearch.css')
+		add_script(req, 'advsearch/js/advsearch.js')
 		return 'advsearch.html', data, None
 
 	def _merge_results(self, result_map, per_page):
@@ -262,17 +268,24 @@ class StartPoints(object):
 		start_points = {}
 		for provider in provider_list:
 			start_points[provider.get_name()] = req_args.getfirst(
-				cls.FORMAT_STRING % provider, 
+				cls.FORMAT_STRING % provider.get_name(), 
 				0
 			)
 		return start_points
 
 	@classmethod
-	def format(cls, results):
+	def format(cls, results, prev_start_points):
 		"""Return dict of start_point name to value."""
-		start_points = defaultdict(int)
-		for result in results: 
-			start_points[result['backend_name']] += 1
+		start_points = {}
+		for result in results:
+			backend_name = result['backend_name']
+			if not backend_name in start_points:
+				try:
+					prev_start = int(prev_start_points.get(backend_name, 0))
+				except:
+					prev_start = 0
+				start_points[backend_name] = prev_start
+			start_points[backend_name] += 1
 
 		return simplejson.dumps(
 			[
