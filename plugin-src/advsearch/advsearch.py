@@ -138,7 +138,7 @@ class AdvancedSearchPlugin(Component):
 
 		data = {
 			'source': req.args.getlist('source_filters'),
-			'author': req.args.getlist('author_filters'),
+			'author': req.args.getlist('author'),
 			# TODO: default values for date
 			'date_start': req.args.getfirst('date_range_start'),
 			'date_end': req.args.getfirst('date_range_end'),
