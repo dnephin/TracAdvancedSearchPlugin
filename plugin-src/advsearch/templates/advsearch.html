@@ -52,7 +52,10 @@
 		<div>
 		  <dl id="results">
 			<py:for each="result in results">
-			  <dt><a href="${result.href}" class="searchable">${result.title}</a></dt>
+			  <dt>
+			  	<em>[${result.source}]</em>
+				<a href="${result.href}" class="searchable">${result.title}</a>
+			  </dt>
 			  <dd class="searchable">${result.summary}</dd>
 			  <dd>
 				<py:if test="result.author">

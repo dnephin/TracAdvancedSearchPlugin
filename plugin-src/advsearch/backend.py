@@ -67,7 +67,6 @@ class PySolrSearchBackEnd(Component):
 			result['summary'] = result['text'][:250]
 			result['date'] = self._date_from_solr(result['time'])
 			del result['time']
-			del result['id']
 			del result['text']
 			del result['name']
 

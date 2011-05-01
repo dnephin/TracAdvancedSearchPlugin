@@ -11,6 +11,7 @@ import pkg_resources
 import re
 import simplejson
 
+from genshi.builder import tag
 from trac.perm import IPermissionRequestor
 from trac.web.chrome import INavigationContributor
 from trac.web.chrome import ITemplateProvider
@@ -177,7 +178,8 @@ class AdvancedSearchPlugin(Component):
 		for result in results:
 			if result['source'] == 'wiki':
 				result['href'] = self.env.href.wiki(result['title'])
-			# TODO: build href from other sources
+			if result['source'] == 'ticket':
+				result['href'] = self.env.href.ticket(result['ticket_id'])
 
 	def _get_filter_dicts(self, req_args):
 		"""Map filters to filter dicts for the frontend."""
@@ -195,13 +197,18 @@ class AdvancedSearchPlugin(Component):
 
 	# IWikiSyntaxProvider methods
 	def get_wiki_syntax(self):
-		# TODO
 		return []
 		
 	def get_link_resolvers(self):
-		# TODO
-		return []
+		yield ('advsearch', self._format_link)
 
+	def _format_link(self, formatter, ns, target, label):
+		path, query, fragment = formatter.split_link(target)
+		if query:
+			href = formatter.href.advsearch() + query.replace(' ', '+')
+		else:
+			href = target
+		return tag.a(label, class_='search', href=href)
 
 	# IWikiChangeListener methods
 	def _update_wiki_page(self, page):

@@ -25,8 +25,31 @@
 				comment,
 				concat('wiki_',name) as id,
 				'wiki' as source
-				from wiki">
-
+				from wiki
+				order by time asc">
+		</entity>
+		<entity
+			name="ticket"
+			query="select
+				concat('ticket_',id) as id,
+				id as ticket_id,
+				'ticket' as source,
+				type,
+				from_unixtime(time/1000000) as time, 
+				from_unixtime(changetime/1000000) as changetime, 
+				component,
+				severity,
+				priority,
+				owner,
+				reporter as author,
+				version as ticket_version,
+				milestone,
+				status,
+				resolution,
+				summary as name,
+				description as text,
+				keywords
+				from ticket">
 		</entity>
 	</document>
 
