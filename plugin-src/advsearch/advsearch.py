@@ -207,6 +207,7 @@ class AdvancedSearchPlugin(Component):
 	def _update_wiki_page(self, page):
 		doc = {
 			'source': 'wiki',
+			'id': 'wiki_%s' % page.name,
 		}
 		for prop in ('name', 'version', 'time', 'author', 'text', 'comment'):
 			doc[prop] = getattr(page, prop)
@@ -228,8 +229,6 @@ class AdvancedSearchPlugin(Component):
 	def wiki_page_renamed(self, page, old_name):
 		self._delete_wiki_page(old_name)
 		self._update_wiki_page(page)
-		
-		
 
 
 class StartPoints(object):

@@ -113,7 +113,7 @@
 	<field name="time"        type="date" indexed="true" stored="true"/>
 	<field name="author"      type="string" indexed="true" stored="true"/>
 	<field name="text"        type="string" indexed="true" stored="true"/>
-	<field name="token_text"  type="text" indexed="true" stored="false"/>
+	<field name="token_text"  type="text" indexed="true" stored="false" multiValued="true"/>
 	<field name="comment"     type="string" indexed="true" stored="false"/>
 	<field name="source"      type="string" indexed="true" stored="true"/>
 
@@ -126,5 +126,6 @@
   <solrQueryParser defaultOperator="OR"/>
 
   <copyField source="text" dest="token_text"/>
+  <copyField source="name" dest="token_text"/>
 
 </schema>

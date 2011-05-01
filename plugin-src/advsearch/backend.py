@@ -30,12 +30,11 @@ class PySolrSearchBackEnd(Component):
 		return self.__class__.__name__
 
 	def upsert_document(self, doc):
-		# TODO:
-		print "upsert"
+		doc['time'] = doc['time'].strftime(self.SOLR_DATE_FORMAT)
+		self.conn.add([doc])
 
 	def delete_document(self, identifier):
-		# TODO:
-		print "delete"
+		self.conn.delete(id=identifier)
 
 	def query_backend(self, criteria):
 		"""Send a query to solr."""
@@ -49,7 +48,6 @@ class PySolrSearchBackEnd(Component):
 
 		# add all fields
 		q['token_text'] = criteria.get('q')
-		# TODO : add to schema
 		q['source'] = self._string_from_filters(criteria.get('source'))
 		q['author'] = self._string_from_input(criteria.get('author'))
 		q['time'] = self._date_from_range(
@@ -66,7 +64,7 @@ class PySolrSearchBackEnd(Component):
 		for result in results:
 			result['title'] = result['name']
 			# TODO: better summary
-			result['summary'] = result['text'][:200]
+			result['summary'] = result['text'][:250]
 			result['date'] = self._date_from_solr(result['time'])
 			del result['time']
 			del result['id']
@@ -106,16 +104,17 @@ class PySolrSearchBackEnd(Component):
 		if not start and not end:
 			return None
 
-		def format(date_string):
-			try:
-				date = datetime.datetime.strptime(
-					date_string, self.INPUT_DATE_FORMAT)
-			except ValueError:
-				self.log.warn("Invalid date format: %s" % date_string)
-				return "*"
-			return date.strftime(self.SOLR_DATE_FORMAT)
-
-		start_formatted = format(start) if start else "*"
-		end_formatted = format(end) if end else "*"
+		start_formatted = self._format_date(start) if start else "*"
+		end_formatted = self._format_date(end) if end else "*"
 		return "[%s TO %s]" % (start_formatted, end_formatted)
+
+	def _format_date(self, date_string, default="*"):
+		"""Format a date as a solr date string."""
+		try:
+			date = datetime.datetime.strptime(
+				date_string, self.INPUT_DATE_FORMAT)
+		except ValueError:
+			self.log.warn("Invalid date format: %s" % date_string)
+			return default
+		return date.strftime(self.SOLR_DATE_FORMAT)
 
