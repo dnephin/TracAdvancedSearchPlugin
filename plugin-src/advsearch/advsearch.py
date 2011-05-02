@@ -31,6 +31,13 @@ from trac.web.chrome import add_stylesheet, add_warning, add_link, add_script
 from interface import IAdvSearchBackend
 
 
+class SearchBackendException(Exception):
+	"""
+	Raised by SearchBackends when there is a problem completeing the search
+	query or indexing.
+	"""
+
+
 class AdvancedSearchPlugin(Component):
 	implements(
 		INavigationContributor, 
@@ -81,6 +88,7 @@ class AdvancedSearchPlugin(Component):
 			per_page = int(req.args.getfirst('per_page', 
 				self.DEFAULT_PER_PAGE))
 		except ValueError:
+			self.log.warn('Could not set per_page to %s' % req.args.getfirst('per_page'))
 			per_page = self.DEFAULT_PER_PAGE
 
 		try:
@@ -94,7 +102,8 @@ class AdvancedSearchPlugin(Component):
 			'date_start': req.args.getfirst('date_start'),
 			'date_end': req.args.getfirst('date_end'),
 			'q': query,
-			'start_points': StartPoints.parse_args(req.args, self.providers)
+			'start_points': StartPoints.parse_args(req.args, self.providers),
+			'per_page': per_page
 		}
 
 		if not query:
@@ -104,11 +113,17 @@ class AdvancedSearchPlugin(Component):
 		result_map = {}
 		total_count = 0
 		for provider in self.providers:
-			result_count, result_list = provider.query_backend(data)
+			result_count, result_list = 0, []
+			try:
+				result_count, result_list = provider.query_backend(data)
+			except SearchBackendException, e:
+				add_warning(req, _('SearchBackendException: %s' % e))
 			total_count += result_count
 			result_map[provider.get_name()] = result_list
 
-		data['per_page'] = per_page
+		if not result_count:
+			return self._send_response(req, data)
+
 		data['page'] = page
 		results = self._merge_results(result_map, per_page)
 		self._add_href_to_results(results)
@@ -221,12 +236,18 @@ class AdvancedSearchPlugin(Component):
 		for prop in ('name', 'version', 'time', 'author', 'text', 'comment'):
 			doc[prop] = getattr(page, prop)
 		for provider in self.providers:
-			provider.upsert_document(doc)
+			try:
+				provider.upsert_document(doc)
+			except SearchBackendException, e:
+				self.log.error('SearchBackendException: %s' % e)
 
 	def _delete_wiki_page(self, name):
 		identifier = 'wiki_%s' % (name)
 		for provider in self.providers:
-			provider.delete_document(identifier)
+			try:
+				provider.delete_document(identifier)
+			except SearchBackendException, e:
+				self.log.error('SearchBackendException: %s' % e)
 
 	wiki_page_added = _update_wiki_page
 	wiki_page_version_deleted = _update_wiki_page
@@ -269,12 +290,18 @@ class AdvancedSearchPlugin(Component):
 		):
 			doc[prop] = ticket[prop]
 		for provider in self.providers:
-			provider.upsert_document(doc)
+			try:
+				provider.upsert_document(doc)
+			except SearchBackendException, e:
+				self.log.error('SearchBackendException: %s' % e)
 		
 	def ticket_deleted(ticket):
 		identifier = 'ticket_%s' % (ticket.id)
 		for provider in self.providers:
-			provider.delete_document(identifier)
+			try:
+				provider.delete_document(identifier)
+			except SearchBackendException, e:
+				self.log.error('SearchBackendException: %s' % e)
 
 	def ticket_changed(self, ticket, comment, author, old_values):
 		self.ticket_created(ticket)

@@ -18,6 +18,7 @@
 		  <input type="submit" value="${_('Search')}" />
 		</p>
 
+		<div id="general_filters">
 		<fieldset>
 		  <legend>${_('Source(s)')}:</legend>
 		  <py:for each="filter in source">
@@ -42,6 +43,19 @@
 		  <label for="date_end">End</label>
 		  <input type="text" name="date_end" value="${date_end}" />
 		</fieldset>
+
+		<fieldset>
+		<label for="per_page">Results per page:</label>
+		<select name="per_page">
+			<py:for each="option in [10,25,50,100]">
+				<py:choose>
+					<option py:when="per_page == option" value="$option" selected="selected">$option</option>
+					<option py:otherwise="" value="$option">$option</option>
+				</py:choose>
+			</py:for>
+		</select>
+		</fieldset>
+		</div>
 
 	  </form>
 

@@ -9,7 +9,7 @@ from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
 from interface import IAdvSearchBackend
-
+from advsearch import SearchBackendException
 
 class PySolrSearchBackEnd(Component):
 	"""AdvancedSearchBackend that uses pysolr lib to search Solr."""
@@ -31,23 +31,34 @@ class PySolrSearchBackEnd(Component):
 
 	def upsert_document(self, doc):
 		doc['time'] = doc['time'].strftime(self.SOLR_DATE_FORMAT)
-		self.conn.add([doc])
+		try:
+			self.conn.add([doc])
+		except pysolr.SolrError, e:
+			raise SearchBackendException(e)
 
 	def delete_document(self, identifier):
-		self.conn.delete(id=identifier)
+		try:
+			self.conn.delete(id=identifier)
+		except pysolr.SolrError, e:
+			raise SearchBackendException(e)
 
 	def query_backend(self, criteria):
 		"""Send a query to solr."""
 	
 		q = {}
-		params = {'fl': '*,score'}
+		params = {
+			'fl': '*,score',
+			'rows': criteria.get('per_page', 10)
+		}
 		# try to find a start offset
 		start_point = criteria['start_points'].get(self.get_name())
 		if start_point:
 			params['start'] = start_point
 
 		# add all fields
-		q['token_text'] = criteria.get('q')
+		query = criteria.get('q')
+		if query != '*':
+			q['token_text'] = criteria.get('q')
 		q['source'] = self._string_from_filters(criteria.get('source'))
 		q['author'] = self._string_from_input(criteria.get('author'))
 		q['time'] = self._date_from_range(
@@ -60,11 +71,16 @@ class PySolrSearchBackEnd(Component):
 		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
 			q_pairs.append("%s: %s" % (k, v))
 
-		results = self.conn.search(" AND ".join(q_pairs), **params)
+		q_string = " AND ".join(q_pairs) if q_pairs else '*:*'
+
+		try:
+			results = self.conn.search(q_string, **params)
+		except pysolr.SolrError, e:
+			raise SearchBackendException(e)
 		for result in results:
 			result['title'] = result['name']
 			# TODO: better summary
-			result['summary'] = result['text'][:250]
+			result['summary'] = result['text'][:500]
 			result['date'] = self._date_from_solr(result['time'])
 			del result['time']
 			del result['text']

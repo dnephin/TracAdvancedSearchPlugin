@@ -31,6 +31,30 @@ easy_install simplejson (for python < 2.6)
 
 
 
+__ Installation __
+
+This assumes you already have a Trac environment setup.
+
+1. Build and install the plugin
+cd plugin-src 
+python setup.py bdist_egg
+cp ./dist/TracAdvancedSearch-0.2-py2.5.egg <trac_environment_home>/plugins
+
+2. Setup the search backend.  If you're using solr, copy and modify the 
+configuration files provided.
+cp ./solr/conf/* <solr_home>/conf
+
+3. Index your current tickets and wiki pages in the search backend.  If you're
+using solr, see ./solr/conf/data-config.xml
+
+4. Configure your trac.ini (see the Configuration section below).
+
+5. Restart the trac server. This will differ based on how you are running trac (apache, tracd, etc).
+
+That's it. You should see an Advanced Search button in the main navbar.
+
+
+
 __ Configuration __
 
 In trac.ini you'll need to configure whichever search backend you're using.  If
