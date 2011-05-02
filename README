@@ -1,15 +1,29 @@
 
-
 Trac Advanced Search Plugin
+---------------------------
 README
 
+This Trac plugin allows you to use a full-text search engine (such as solr) as
+the search backend for performing search in Trac.  This plugin also includes a
+backend for solr, but other plugins can use the extension point provided to
+use a different backend.
 
+See the interface in plugin-src/advsearch/interface.py for details about which
+methods to implement.
+
+See http://trac.edgewall.org/wiki/TracDev for more information about developing
+a Trac plugin.
+
+
+
+__ Project Status __
 Still under development.
 
 
 
-
 __ Requirements __
+
+The following python packages are required for the solr backend.
 
 easy_install httplib2
 easy_install pysolr
@@ -25,6 +39,7 @@ you're using the default pysolr backend, add something like this:
 [pysolr_search_backend]
 solr_url = http://localhost:8983/solr/
 timeout = 30 
+
 
 
 __ Remove Search button __
