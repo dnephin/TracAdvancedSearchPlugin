@@ -23,11 +23,10 @@ from trac.wiki.api import IWikiSyntaxProvider
 from trac.core import Component
 from trac.core import ExtensionPoint
 from trac.core import implements
-from trac.util import escape
 from trac.util.html import html
 from trac.util.presentation import Paginator
 from trac.util.translation import _
-from trac.web.chrome import add_stylesheet, add_warning, add_link, add_script
+from trac.web.chrome import add_stylesheet, add_warning, add_script
 from interface import IAdvSearchBackend
 
 
@@ -246,7 +245,7 @@ class AdvancedSearchPlugin(Component):
 
 	wiki_page_added = _update_wiki_page
 	wiki_page_version_deleted = _update_wiki_page
-	wiki_page_deleted = lambda page: _delete_wiki_page(page.name)
+	wiki_page_deleted = lambda self, page: self._delete_wiki_page(page.name)
 
 	def wiki_page_changed(self, page, version, t, comment, author, ipnr):
 		self._update_wiki_page(page)
@@ -290,7 +289,7 @@ class AdvancedSearchPlugin(Component):
 			except SearchBackendException, e:
 				self.log.error('SearchBackendException: %s' % e)
 		
-	def ticket_deleted(ticket):
+	def ticket_deleted(self, ticket):
 		identifier = 'ticket_%s' % (ticket.id)
 		for provider in self.providers:
 			try:
