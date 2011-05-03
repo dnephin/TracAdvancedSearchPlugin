@@ -75,3 +75,8 @@ Your trac.ini may already have a components section.
 trac.search.web_ui.SearchModule = disabled  
 
 
+
+__ TODO __
+
+- Filters for ticket only properties
+- improved summary

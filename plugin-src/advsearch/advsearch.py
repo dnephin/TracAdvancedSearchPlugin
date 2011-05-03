@@ -88,7 +88,8 @@ class AdvancedSearchPlugin(Component):
 			per_page = int(req.args.getfirst('per_page', 
 				self.DEFAULT_PER_PAGE))
 		except ValueError:
-			self.log.warn('Could not set per_page to %s' % req.args.getfirst('per_page'))
+			self.log.warn('Could not set per_page to %s' % 
+					req.args.getfirst('per_page'))
 			per_page = self.DEFAULT_PER_PAGE
 
 		try:
