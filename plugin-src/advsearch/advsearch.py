@@ -33,7 +33,7 @@ from interface import IAdvSearchBackend
 
 class SearchBackendException(Exception):
 	"""
-	Raised by SearchBackends when there is a problem completeing the search
+	Raised by SearchBackends when there is a problem completing the search
 	query or indexing.
 	"""
 
