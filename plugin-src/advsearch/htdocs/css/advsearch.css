@@ -13,3 +13,16 @@
 .clear {
 	clear: both;
 }
+
+#date_range label {
+	width: 3em;
+	display: inline-block;
+}
+#date_range em {
+	font-size: 0.8em;
+}
+
+#author_list DIV A {
+	font-size: 0.9em;
+	font-style: italic;
+}

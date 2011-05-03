@@ -12,3 +12,16 @@ function next_page(start_point_list) {
 	page.val(parseInt(page.val()) + 1);
 	form.submit();
 }
+
+function add_author_input(elem) {
+	$(elem).parent('div').before(
+		'<div><input type="text" name="author"/> ' +
+		'<a href="#" onclick="return remove_author_input(this)">remove</a></div>'
+	)
+	return false;
+}
+
+function remove_author_input(elem) {
+	$(elem).parent('div').remove();
+	return false;
+}

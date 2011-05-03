@@ -100,6 +100,7 @@
 	<field name="severity"    type="string" indexed="true" stored="false"/>
 	<field name="priority"    type="string" indexed="true" stored="false"/>
 	<field name="owner"       type="string" indexed="true" stored="false"/>
+	<field name="cc"          type="string" indexed="true" stored="false"/>
 	<field name="milestone"   type="string" indexed="true" stored="false"/>
 	<field name="status"      type="string" indexed="true" stored="false"/>
 	<field name="resolution"  type="string" indexed="true" stored="false"/>

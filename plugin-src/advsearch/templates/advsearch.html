@@ -28,20 +28,27 @@
 		  </py:for>
 		</fieldset>
 
-		<fieldset>
+		<fieldset id="author_list">
 		  <legend>${_('Author(s)')}:</legend>
 		  <py:for each="filter in author">
-		  	<input type="text" name="author" value="${filter}" />
+		  	<div>
+			  	<input type="text" name="author" value="${filter}" />
+				<a href="#" onclick="return remove_author_input(this)">remove</a>
+			</div>
 		  </py:for>
-		  <input type="text" name="author" />
+		  <div>
+			  <input type="text" name="author" />
+			  <a href="#" onclick="return add_author_input(this)">add</a>
+		  </div>
 		</fieldset>
 
-		<fieldset>
+		<fieldset id="date_range">
 		  <legend>${_('Date Range')}:</legend>
 		  <label for="date_start">Start</label>
 		  <input type="text" name="date_start" value="${date_start}" /><br />
 		  <label for="date_end">End</label>
-		  <input type="text" name="date_end" value="${date_end}" />
+		  <input type="text" name="date_end" value="${date_end}" /><br />
+		  <em>Format: yyyy-MM-dd HH:mm:ss</em>
 		</fieldset>
 
 		<fieldset>

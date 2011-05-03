@@ -51,6 +51,7 @@
 				severity,
 				priority,
 				owner,
+				cc,
 				reporter as author,
 				version as ticket_version,
 				milestone,
