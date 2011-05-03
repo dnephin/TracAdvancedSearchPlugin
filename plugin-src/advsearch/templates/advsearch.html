@@ -13,9 +13,9 @@
 	  <h1><label for="q">${_('Advanced Search')}</label></h1>
 	  <form id="fullsearch" action="${href.advsearch()}" method="get">
 		<p>
-		  <input type="text" id="q" name="q" size="40" value="${q}" />
+		  <input type="text" id="q" name="q" size="40" value="${q or '*'}" />
 		  <input type="hidden" name="page" value="${page}" />
-		  <input type="submit" value="${_('Search')}" />
+		  <input type="submit" value="${_('Search')}" /><br />
 		</p>
 
 		<div id="general_filters">
@@ -86,7 +86,9 @@
 			  </dd>
 			</py:for>
 		  </dl>
-		<xi:include py:with="paginator = results" href="page_index.html" /> 
+		  <py:if test="results.has_next_page">
+			  <a href="#" onclick="return next_page(${start_points})">Next Page (${page+1})</a>
+		  </py:if>
 		</div>
 	  </py:if>
 

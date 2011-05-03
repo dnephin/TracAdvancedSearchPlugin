@@ -136,13 +136,7 @@ class AdvancedSearchPlugin(Component):
 
 		# pagination next/prev links
 		if data['results'].has_next_page:
-			start_points = StartPoints.format(results, data['start_points'])
-			next_href = "javascript:next_page(%s)" % start_points
-			add_link(req, 'next', next_href, _('Next Page'))
-
-		if data['results'].has_previous_page:
-			prev_href = "javascript:history.go(-1)"
-			add_link(req, 'prev', prev_href, _('Previous Page'))
+			data['start_points'] = StartPoints.format(results, data['start_points'])
 		
 		return self._send_response(req, data)
 
@@ -346,4 +340,3 @@ class StartPoints(object):
 				for (name, value) in start_points.iteritems()
 			]
 		)
-

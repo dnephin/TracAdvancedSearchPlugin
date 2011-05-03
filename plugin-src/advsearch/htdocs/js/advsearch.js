@@ -3,21 +3,23 @@
 function next_page(start_point_list) {
 	var form = $('#fullsearch');
 
-	$.each(start_point_list, function(i, start_point) {
-		form.append('<input type="hidden" name="' + start_point['name'] +
-			'" value="' + start_point['value'] + '" />');
-	})
+	query_string = form.serialize();
+	// Increase page count
+	var page = parseInt(form.find('input[name=page]').val()) + 1;
+	query_string = query_string.replace(new RegExp("page=\\d+"), 'page='+page);
 
-	var page = form.find('input[name=page]');
-	page.val(parseInt(page.val()) + 1);
-	form.submit();
+	// Set start points
+	query_string += '&' + $.param(start_point_list)
+
+	document.location.search = '?' + query_string;
+	return false;
 }
 
 function add_author_input(elem) {
 	$(elem).parent('div').before(
 		'<div><input type="text" name="author"/> ' +
 		'<a href="#" onclick="return remove_author_input(this)">remove</a></div>'
-	)
+	);
 	return false;
 }
 
