@@ -1,3 +1,4 @@
-from advsearch import *
-from backend import *
-from interface import *
+from advsearch import SearchBackendException
+from advsearch import AdvancedSearchPlugin
+from backend import PySolrSearchBackEnd
+from interface import IAdvSearchBackend
