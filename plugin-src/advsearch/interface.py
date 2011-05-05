@@ -6,6 +6,12 @@ class IAdvSearchBackend(Interface):
 	def get_name():
 		"""Return the name of this backend."""
 
+	def get_sources():
+		"""
+		Return a sequence of strings identifying the sources this backend
+		is able to search.
+		"""
+
 	def upsert_document(doc):
 		"""
 		Insert or update a document in the search backend.

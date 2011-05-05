@@ -29,6 +29,9 @@ class PySolrSearchBackEnd(Component):
 		"""Return friendly name for this IAdvSearchBackend provider."""
 		return self.__class__.__name__
 
+	def get_sources(self):
+		return ('wiki', 'ticket')
+
 	def upsert_document(self, doc):
 		doc['time'] = doc['time'].strftime(self.SOLR_DATE_FORMAT)
 		try:

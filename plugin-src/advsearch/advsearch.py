@@ -6,6 +6,7 @@ This module defines a Trac extension point for the advanced search backend.
 See TracAdvancedSearchBackend for more details.
 """
 
+import itertools
 from operator import itemgetter
 import pkg_resources
 import re
@@ -20,6 +21,7 @@ from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiChangeListener
 from trac.wiki.api import IWikiSyntaxProvider
 
+from interface import IAdvSearchBackend
 from trac.core import Component
 from trac.core import ExtensionPoint
 from trac.core import implements
@@ -27,7 +29,6 @@ from trac.util.html import html
 from trac.util.presentation import Paginator
 from trac.util.translation import _
 from trac.web.chrome import add_stylesheet, add_warning, add_script
-from interface import IAdvSearchBackend
 
 
 class SearchBackendException(Exception):
@@ -50,8 +51,10 @@ class AdvancedSearchPlugin(Component):
 	
 	providers = ExtensionPoint(IAdvSearchBackend)
 
-	SOURCE_FILTERS = ('wiki', 'ticket')
 	DEFAULT_PER_PAGE = 10
+
+	def _get_source_filters(self):
+		return set(itertools.chain(*(p.get_sources() for p in self.providers)))
 
 	# INavigationContributor methods
 	def get_active_navigation_item(self, req):
@@ -196,7 +199,7 @@ class AdvancedSearchPlugin(Component):
 		"""Map filters to filter dicts for the frontend."""
 		return [
 			{'name': filter, 'active': req_args.get(filter)}
-			for filter in self.SOURCE_FILTERS
+			for filter in self._get_source_filters()
 		]
 
 	# ITemplateProvider methods
