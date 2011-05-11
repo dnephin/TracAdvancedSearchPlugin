@@ -3,3 +3,4 @@ plugin-src/build
 plugin-src/dist
 *.swp
 *.pyc
+TracAdvancedSearch.egg-info

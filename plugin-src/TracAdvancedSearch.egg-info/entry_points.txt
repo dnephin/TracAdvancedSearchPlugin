@@ -1,3 +1,0 @@
-[trac.plugins]
-TracAdvancedSearch = advsearch
-
