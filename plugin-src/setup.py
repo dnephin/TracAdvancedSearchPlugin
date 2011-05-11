@@ -1,14 +1,14 @@
 from setuptools import setup
 
 PACKAGE = 'TracAdvancedSearch'
-VERSION = '0.2'
+VERSION = '0.3'
 
 setup(name=PACKAGE,
 	version=VERSION,
-	packages=['advsearch'],
-	entry_points={'trac.plugins': '%s = advsearch' % PACKAGE},
+	packages=['tracadvsearch'],
+	entry_points={'trac.plugins': '%s = tracadvsearch' % PACKAGE},
 	package_data={
-		'advsearch': [
+		'tracadvsearch': [
 			'templates/*.html',
 			'htdocs/css/*.css',
 			'htdocs/js/*.js'

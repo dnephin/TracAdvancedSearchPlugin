@@ -62,9 +62,10 @@ class AdvancedSearchPlugin(Component):
 
 	def get_navigation_items(self, req):
 		if 'SEARCH_VIEW' in req.perm:
+			label = self.config.get('advanced_search_plugin', 'menu_label', 'Advanced Search')
 			yield ('mainnav', 
 				'advsearch', 
-				html.A(_('Advanced Search'), href=self.env.href.advsearch())
+				html.A(_(label), href=self.env.href.advsearch())
 			)
 
 	# IPermissionRequestor methods

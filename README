@@ -3,16 +3,27 @@ Trac Advanced Search Plugin
 ---------------------------
 README
 
-This Trac plugin allows you to use a full-text search engine (such as solr) as
-the search backend for performing search in Trac.  This plugin also includes a
-backend for solr, but other plugins can use the extension point provided to
-use a different backend.
+An advanced search plugin for the open source Trac project 
+(http://trac.edgewall.org/). This Trac plugin allows you to use a full-text 
+search engine (such as Apache Solr) as the search backend for performing 
+search in Trac.  This plugin also includes a backend for Apache Solr
+(http://lucene.apache.org/solr/), but other plugins can use the extension point
+provided this plugin to use a different backend.
 
 See the interface in plugin-src/advsearch/interface.py for details about which
 methods to implement.
 
 See http://trac.edgewall.org/wiki/TracDev for more information about developing
 a Trac plugin.
+
+
+__ How it works __
+
+Once your existing tickets/wiki documents are indexed in the backend you can 
+make requests using the 'Advanced Search' form.  These searches will be handled
+by the search backend you have confired in trac.ini.  When new documents or
+tickets are added the upsert_document will be called on each search backend 
+to update the index immediately. 
 
 
 
@@ -25,9 +36,7 @@ __ Requirements __
 
 The following python packages are required for the solr backend.
 
-easy_install httplib2
-easy_install pysolr
-easy_install simplejson (for python < 2.6)
+pysolr (https://github.com/toastdriven/pysolr)
 
 
 
@@ -49,7 +58,8 @@ using solr, see ./solr/conf/data-config.xml
 
 4. Configure your trac.ini (see the Configuration section below).
 
-5. Restart the trac server. This will differ based on how you are running trac (apache, tracd, etc).
+5. Restart the trac server. This will differ based on how you are running trac 
+(apache, tracd, etc).
 
 That's it. You should see an Advanced Search button in the main navbar.
 
@@ -64,6 +74,10 @@ you're using the default pysolr backend, add something like this:
 solr_url = http://localhost:8983/solr/
 timeout = 30 
 
+[advanced_search_plugin]
+menu_label = Real Search
+
+button_label and timeout are both optional.
 
 
 __ Remove Search button __
