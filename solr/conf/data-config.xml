@@ -41,7 +41,7 @@
 		<entity
 			name="ticket"
 			query="select
-				concat('ticket_',id) as id,
+				concat('ticket_',CAST(id as CHAR)) as id,
 				id as ticket_id,
 				'ticket' as source,
 				type,
