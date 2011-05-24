@@ -110,7 +110,7 @@ class AdvancedSearchPlugin(Component):
 			'per_page': per_page
 		}
 
-		if not query:
+		if not any((query, data.get('author'), data.get('date_start'), data.get('date_end'))):
 			return self._send_response(req, data)
 
 		# perform query using backend if q is set

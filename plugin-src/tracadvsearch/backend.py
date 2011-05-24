@@ -59,9 +59,7 @@ class PySolrSearchBackEnd(Component):
 			params['start'] = start_point
 
 		# add all fields
-		query = criteria.get('q')
-		if query != '*':
-			q['token_text'] = criteria.get('q')
+		q['token_text'] = criteria.get('q')
 		q['source'] = self._string_from_filters(criteria.get('source'))
 		q['author'] = self._string_from_input(criteria.get('author'))
 		q['time'] = self._date_from_range(
