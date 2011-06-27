@@ -85,10 +85,9 @@ class PySolrSearchBackEnd(Component):
 			raise SearchBackendException(e)
 		for result in results:
 			result['title'] = result['name']
-			result['summary'] = self._build_summary(result['text'], criteria['q'])
+			result['summary'] = self._build_summary(result.get('text'), criteria['q'])
 			result['date'] = self._date_from_solr(result['time'])
 			del result['time']
-			del result['text']
 			del result['name']
 
 		return (results.hits, results.docs)
@@ -97,6 +96,8 @@ class PySolrSearchBackEnd(Component):
 		"""Build a summary which highlights the search terms."""
 		if not query:
 			return text[:500]
+		if not text:
+			return ''
 
 		return shorten_result(text, query.split(), maxlen=500)
 
