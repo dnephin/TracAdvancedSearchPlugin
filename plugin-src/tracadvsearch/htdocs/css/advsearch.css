@@ -1,5 +1,5 @@
 
-#general_filters, 
+#general_filters,
 #ticket_filters {
 	max-width: 300px;
 	float: left;
@@ -28,3 +28,29 @@
 	font-style: italic;
 }
 
+
+.result_header {
+	margin: 2px 0;
+	font-weight: bold;
+}
+
+.even {
+	background: #eee;
+}
+
+.result_header SPAN.result_type {
+	padding: 0 4px 0 0;
+}
+
+.result_summary {
+	font-size: 0.8em;
+}
+
+.result_footer {
+	font-size: 0.8em;
+	margin-top: 2px;
+}
+
+.result {
+	padding: 5px 10px;
+}

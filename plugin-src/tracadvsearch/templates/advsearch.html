@@ -84,23 +84,28 @@
 		  Results <span class="numresults">(${results.displayed_items()})</span>
 		</h2>
 		<div>
-		  <dl id="results">
-			<py:for each="result in results">
-			  <dt>
-			  	<em>[${result.source}]</em>
+		  <div id="results">
+			<py:for each="idx, result in enumerate(results)">
+			  <div class="result ${'even' if not idx % 2 else None}">
+			  <div class="result_header">
+			  	<span class="result_type">${result.source}</span>
 				<a href="${result.href}" class="searchable">${result.title}</a>
-			  </dt>
-			  <dd class="searchable">${result.summary}</dd>
-			  <dd>
+			  </div>
+			  <div class="result_summary">${result.summary}</div>
+			  <div class="result_footer">
 				<py:if test="result.author">
 					<span class="author" i18n:msg="author">By ${format_author(result.author)}</span> &mdash;
 				</py:if>
 				<span class="date">${result.date}</span>
-			  </dd>
+			  </div>
+			  </div>
 			</py:for>
-		  </dl>
+		  </div>
+
 		  <py:if test="results.has_next_page">
+	  		<p>
 			  <a href="#" onclick="return next_page(${start_points})">Next Page (${page+1})</a>
+			</p>
 		  </py:if>
 		</div>
 	  </py:if>
