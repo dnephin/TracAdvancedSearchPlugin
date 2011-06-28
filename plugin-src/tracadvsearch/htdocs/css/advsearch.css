@@ -1,6 +1,8 @@
 
-#general_filters {
+#general_filters, 
+#ticket_filters {
 	max-width: 300px;
+	float: left;
 }
 
 #fullsearch fieldset {
@@ -25,3 +27,4 @@
 	font-size: 0.9em;
 	font-style: italic;
 }
+

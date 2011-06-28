@@ -40,7 +40,7 @@ class SearchBackendException(Exception):
 
 class AdvancedSearchPlugin(Component):
 	implements(
-		INavigationContributor, 
+		INavigationContributor,
 		IPermissionRequestor,
 		IRequestHandler,
 		ITemplateProvider,
@@ -48,7 +48,7 @@ class AdvancedSearchPlugin(Component):
 		IWikiChangeListener,
 		IWikiSyntaxProvider,
 	)
-	
+
 	providers = ExtensionPoint(IAdvSearchBackend)
 
 	DEFAULT_PER_PAGE = 10
@@ -62,9 +62,13 @@ class AdvancedSearchPlugin(Component):
 
 	def get_navigation_items(self, req):
 		if 'SEARCH_VIEW' in req.perm:
-			label = self.config.get('advanced_search_plugin', 'menu_label', 'Advanced Search')
-			yield ('mainnav', 
-				'advsearch', 
+			label = self.config.get(
+				'advanced_search_plugin',
+				'menu_label',
+				'Advanced Search'
+			)
+			yield ('mainnav',
+				'advsearch',
 				html.A(_(label), href=self.env.href.advsearch())
 			)
 
@@ -81,17 +85,17 @@ class AdvancedSearchPlugin(Component):
 		"""
 		Implements IRequestHandler.process_request
 
-		Build a dict of search criteria from the user and request results from 
+		Build a dict of search criteria from the user and request results from
 		the active AdvancedSearchBackend.
 		"""
 		req.perm.assert_permission('SEARCH_VIEW')
 
 		query = req.args.get('q')
 		try:
-			per_page = int(req.args.getfirst('per_page', 
+			per_page = int(req.args.getfirst('per_page',
 				self.DEFAULT_PER_PAGE))
 		except ValueError:
-			self.log.warn('Could not set per_page to %s' % 
+			self.log.warn('Could not set per_page to %s' %
 					req.args.getfirst('per_page'))
 			per_page = self.DEFAULT_PER_PAGE
 
@@ -107,7 +111,8 @@ class AdvancedSearchPlugin(Component):
 			'date_end': req.args.getfirst('date_end'),
 			'q': query,
 			'start_points': StartPoints.parse_args(req.args, self.providers),
-			'per_page': per_page
+			'per_page': per_page,
+			'ticket_statuses': self._get_ticket_statuses(req.args),
 		}
 
 		if not any((query, data.get('author'), data.get('date_start'), data.get('date_end'))):
@@ -132,16 +137,16 @@ class AdvancedSearchPlugin(Component):
 		results = self._merge_results(result_map, per_page)
 		self._add_href_to_results(results)
 		data['results'] = Paginator(
-			results, 
-			page=page-1, 
-			max_per_page=per_page, 
+			results,
+			page=page-1,
+			max_per_page=per_page,
 			num_items=total_count
 		)
 
 		# pagination next/prev links
 		if data['results'].has_next_page:
 			data['start_points'] = StartPoints.format(results, data['start_points'])
-		
+
 		return self._send_response(req, data)
 
 	def _send_response(self, req, data):
@@ -154,7 +159,7 @@ class AdvancedSearchPlugin(Component):
 
 		if data.get('results') and not len(data['results']):
 			add_warning(req, _('No results.'))
-			
+
 		add_stylesheet(req, 'common/css/search.css')
 		add_stylesheet(req, 'advsearch/css/advsearch.css')
 		add_script(req, 'advsearch/js/advsearch.js')
@@ -164,13 +169,13 @@ class AdvancedSearchPlugin(Component):
 		"""
 		Merge results from multiple sources by score in each result. Return
 		the search results to display to the user
-		
+
 		Example:
 		[
 			{
-				'title': 'Trac Help', 
-				'href': 'http://...', 
-				'date': '2011-04-20 12:34:00', 
+				'title': 'Trac Help',
+				'href': 'http://...',
+				'date': '2011-04-20 12:34:00',
 				'author': 'admin',
 				'summary': '...'
 			},
@@ -183,7 +188,7 @@ class AdvancedSearchPlugin(Component):
 			for result_dict in results:
 				result_dict['backend_name'] = backend_name
 			all_results.extend(results)
-				
+
 		# sort and return results for the page
 		all_results.sort(key=itemgetter('score'), reverse=True)
 		return all_results[:per_page]
@@ -203,6 +208,25 @@ class AdvancedSearchPlugin(Component):
 			for filter in self._get_source_filters()
 		]
 
+	def _get_ticket_statuses(self, req_args):
+		"""Create map of ticket statuses."""
+		status_values = ('new', 'assigned', 'closed')
+		statuses = []
+
+		# Default to new/assigned
+		defaults = set(('new', 'assigned'))
+		if any((req_args.get('status_%s' % s) for s in status_values)):
+			defaults = set()
+
+		for status in status_values:
+			field_name = 'status_%s' % status
+			statuses.append({
+				'name': status,
+				'active': req_args.get(field_name) or (status in defaults),
+				'field_name': field_name,
+			})
+		return statuses
+
 	# ITemplateProvider methods
 	def get_htdocs_dirs(self):
 		return [('advsearch', pkg_resources.resource_filename(__name__, 'htdocs'))]
@@ -213,7 +237,7 @@ class AdvancedSearchPlugin(Component):
 	# IWikiSyntaxProvider methods
 	def get_wiki_syntax(self):
 		return []
-		
+
 	def get_link_resolvers(self):
 		yield ('advsearch', self._format_link)
 
@@ -260,7 +284,7 @@ class AdvancedSearchPlugin(Component):
 
 	# ITicketChangeListener methods
 	def ticket_created(self, ticket):
-		from trac.ticket.api import TicketSystem 
+		from trac.ticket.api import TicketSystem
 		print TicketSystem(self.env).get_ticket_fields()
 		print ticket
 		print ticket.values
@@ -274,11 +298,11 @@ class AdvancedSearchPlugin(Component):
 			'text': ticket['description'],
 		}
 		for prop in (
-			'type', 
-			'time', 
-			'changetime', 
-			'component', 
-			'severity', 
+			'type',
+			'time',
+			'changetime',
+			'component',
+			'severity',
 			'priority',
 			'owner',
 			'milestone',
@@ -292,7 +316,7 @@ class AdvancedSearchPlugin(Component):
 				provider.upsert_document(doc)
 			except SearchBackendException, e:
 				self.log.error('SearchBackendException: %s' % e)
-		
+
 	def ticket_deleted(self, ticket):
 		identifier = 'ticket_%s' % (ticket.id)
 		for provider in self.providers:
@@ -316,7 +340,7 @@ class StartPoints(object):
 		start_points = {}
 		for provider in provider_list:
 			start_points[provider.get_name()] = req_args.getfirst(
-				cls.FORMAT_STRING % provider.get_name(), 
+				cls.FORMAT_STRING % provider.get_name(),
 				0
 			)
 		return start_points
@@ -340,7 +364,7 @@ class StartPoints(object):
 				{
 					'name': cls.FORMAT_STRING % name,
 					'value': value
-				} 
+				}
 				for (name, value) in start_points.iteritems()
 			]
 		)

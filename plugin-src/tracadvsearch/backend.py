@@ -24,7 +24,7 @@ class PySolrSearchBackEnd(Component):
 		if not solr_url:
 			raise ConfigurationError('PySolrSearchBackend must be configured in trac.ini')
 		self.conn = pysolr.Solr(solr_url, timeout=timeout)
-	
+
 	def get_name(self):
 		"""Return friendly name for this IAdvSearchBackend provider."""
 		return self.__class__.__name__
@@ -47,7 +47,7 @@ class PySolrSearchBackEnd(Component):
 
 	def query_backend(self, criteria):
 		"""Send a query to solr."""
-	
+
 		q = {}
 		params = {
 			'fl': '*,score',
@@ -66,13 +66,17 @@ class PySolrSearchBackEnd(Component):
 			criteria.get('date_start'),
 			criteria.get('date_end')
 		)
-	
-		# only include key/value pairs when the value is not empty
-		q_pairs = []
-		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
-			q_pairs.append("%s: %s" % (k, v))
 
-		q_string = " AND ".join(q_pairs) if q_pairs else '*:*'
+		# only include key/value pairs when the value is not empty
+		q_parts = []
+		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
+			q_parts.append("%s: %s" % (k, v))
+
+		# Ticket only filters
+		status = self._string_from_filters(criteria.get('ticket_statuses'))
+		q_parts.append("(status: %s OR source: wiki)" % status)
+
+		q_string = " AND ".join(q_parts) if q_parts else '*:*'
 
 		try:
 			results = self.conn.search(q_string, **params)

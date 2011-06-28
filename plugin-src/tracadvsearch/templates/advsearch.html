@@ -51,6 +51,18 @@
 		  <em>Format: yyyy-MM-dd HH:mm:ss</em>
 		</fieldset>
 
+		</div>
+
+		<div id="ticket_filters">
+		<fieldset>
+		  <legend>${_('Ticket Status')}:</legend>
+		  <py:for each="status in ticket_statuses">
+			<input type="checkbox" name="${status.field_name}"
+				   checked="${'checked' if status.active else None}" />
+			<label for="${status.name}">${status.name}</label>
+		  </py:for>
+		</fieldset>
+
 		<fieldset>
 		<label for="per_page">Results per page:</label>
 		<select name="per_page">
@@ -62,7 +74,7 @@
 			</py:for>
 		</select>
 		</fieldset>
-		<div class="clear"></div>
+
 		</div>
 
 	  </form>
