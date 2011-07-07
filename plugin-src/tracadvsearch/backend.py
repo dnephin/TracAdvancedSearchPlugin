@@ -4,12 +4,14 @@ Backends for TracAdvancedSearchPlugin which implement IAdvSearchBackend.
 import datetime
 import itertools
 import pysolr
+import re
 
+from advsearch import SearchBackendException
+from interface import IAdvSearchBackend
 from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
-from interface import IAdvSearchBackend
-from advsearch import SearchBackendException
+from trac.search import shorten_result
 
 class PySolrSearchBackEnd(Component):
 	"""AdvancedSearchBackend that uses pysolr lib to search Solr."""
@@ -84,14 +86,20 @@ class PySolrSearchBackEnd(Component):
 			raise SearchBackendException(e)
 		for result in results:
 			result['title'] = result['name']
-			# TODO: better summary
-			result['summary'] = result['text'][:500]
+			result['summary'] = self._build_summary(result['text'], criteria['q'])
 			result['date'] = self._date_from_solr(result['time'])
 			del result['time']
 			del result['text']
 			del result['name']
 
 		return (results.hits, results.docs)
+
+	def _build_summary(self, text, query):
+		"""Build a summary which highlights the search terms."""
+		if not query:
+			return text
+
+		return shorten_result(text, query.split(), maxlen=500)
 
 	def _date_from_solr(self, date_string):
 		"""Return a human friendly date from solr date string."""

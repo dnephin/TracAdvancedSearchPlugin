@@ -54,3 +54,11 @@
 .result {
 	padding: 5px 10px;
 }
+
+.result_summary .searchword0,
+.result_summary .searchword1,
+.result_summary .searchword2,
+.result_summary .searchword3,
+.result_summary .searchword4 {
+	font-weight: bold;
+}
