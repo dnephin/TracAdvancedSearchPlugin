@@ -4,7 +4,6 @@ Backends for TracAdvancedSearchPlugin which implement IAdvSearchBackend.
 import datetime
 import itertools
 import pysolr
-import re
 
 from advsearch import SearchBackendException
 from interface import IAdvSearchBackend
@@ -97,7 +96,7 @@ class PySolrSearchBackEnd(Component):
 	def _build_summary(self, text, query):
 		"""Build a summary which highlights the search terms."""
 		if not query:
-			return text
+			return text[:500]
 
 		return shorten_result(text, query.split(), maxlen=500)
 

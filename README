@@ -28,8 +28,7 @@ to update the index immediately.
 
 
 __ Project Status __
-Still under development.
-
+Stable, and active.
 
 
 __ Requirements __
@@ -89,8 +88,3 @@ Your trac.ini may already have a components section.
 trac.search.web_ui.SearchModule = disabled  
 
 
-
-__ TODO __
-
-- Filters for ticket only properties
-- improved summary
