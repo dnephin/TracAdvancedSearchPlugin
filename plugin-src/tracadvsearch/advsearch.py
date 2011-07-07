@@ -12,7 +12,6 @@ import pkg_resources
 import re
 import simplejson
 
-from genshi.builder import tag
 from trac.perm import IPermissionRequestor
 from trac.ticket.api import ITicketChangeListener
 from trac.web.chrome import INavigationContributor
@@ -21,14 +20,17 @@ from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiChangeListener
 from trac.wiki.api import IWikiSyntaxProvider
 
+from genshi.builder import tag, Element
 from interface import IAdvSearchBackend
 from trac.core import Component
 from trac.core import ExtensionPoint
 from trac.core import implements
+from trac.mimeview import Context
 from trac.util.html import html
 from trac.util.presentation import Paginator
 from trac.util.translation import _
 from trac.web.chrome import add_stylesheet, add_warning, add_script
+from trac.wiki.formatter import extract_link
 
 
 class SearchBackendException(Exception):
@@ -90,7 +92,6 @@ class AdvancedSearchPlugin(Component):
 		"""
 		req.perm.assert_permission('SEARCH_VIEW')
 
-		query = req.args.get('q')
 		try:
 			per_page = int(req.args.getfirst('per_page',
 				self.DEFAULT_PER_PAGE))
@@ -109,14 +110,20 @@ class AdvancedSearchPlugin(Component):
 			'author': [auth for auth in req.args.getlist('author') if auth],
 			'date_start': req.args.getfirst('date_start'),
 			'date_end': req.args.getfirst('date_end'),
-			'q': query,
+			'q': req.args.get('q'),
 			'start_points': StartPoints.parse_args(req.args, self.providers),
 			'per_page': per_page,
 			'ticket_statuses': self._get_ticket_statuses(req.args),
 		}
 
-		if not any((query, data.get('author'), data.get('date_start'), data.get('date_end'))):
+		# Initial page request
+		if not any((data['q'], data['author'], data['date_start'], data['date_end'])):
 			return self._send_response(req, data)
+
+		# Look for quickjump
+		quickjump = self._get_quickjump(req, data['q'])
+		if quickjump:
+			req.redirect(quickjump)
 
 		# perform query using backend if q is set
 		result_map = {}
@@ -226,6 +233,19 @@ class AdvancedSearchPlugin(Component):
 				'field_name': field_name,
 			})
 		return statuses
+
+	def _get_quickjump(self, req, query):
+		"""Find quickjump requests if the search comes from the searchbox
+		in the header.  The search is assumed to be from the header searchbox 
+		if no page or per_page arguments are found.
+		"""
+		if req.args.get('page') or req.args.get('per_page'):
+			return None
+
+		link = extract_link(self.env, 
+			Context.from_request(req, 'advsearch'), query)
+		if isinstance(link, Element):
+			return link.attrib.get('href')
 
 	# ITemplateProvider methods
 	def get_htdocs_dirs(self):
