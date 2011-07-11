@@ -304,10 +304,10 @@ class AdvancedSearchPlugin(Component):
 
 	# ITicketChangeListener methods
 	def ticket_created(self, ticket):
-		from trac.ticket.api import TicketSystem
-		print TicketSystem(self.env).get_ticket_fields()
-		print ticket
-		print ticket.values
+		comments = [
+			change[4] for change in ticket.get_changelog()
+			if change[2] == 'comment'
+		]
 		doc = {
 			'id': 'ticket_%s' % ticket.id,
 			'ticket_id': ticket.id,
@@ -315,7 +315,7 @@ class AdvancedSearchPlugin(Component):
 			'author': ticket['reporter'],
 			'ticket_version': ticket['version'],
 			'name': ticket['summary'],
-			'text': ticket['description'],
+			'text': '%s %s' % (ticket['description'], ' '.join(comments)),
 		}
 		for prop in (
 			'type',

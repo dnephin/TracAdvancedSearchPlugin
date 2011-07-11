@@ -104,7 +104,7 @@
 	<field name="milestone"   type="string" indexed="true" stored="false"/>
 	<field name="status"      type="string" indexed="true" stored="false"/>
 	<field name="resolution"  type="string" indexed="true" stored="false"/>
-	<field name="keywords"    type="string" indexed="true" stored="false"/>
+	<field name="keywords"    type="text" indexed="true" stored="false"/>
 	<field name="ticket_version" type="string" indexed="true" stored="false"/>
 
   </fields>
@@ -117,5 +117,6 @@
 
   <copyField source="text" dest="token_text"/>
   <copyField source="name" dest="token_text"/>
+  <copyField source="keywords" dest="token_text"/>
 
 </schema>

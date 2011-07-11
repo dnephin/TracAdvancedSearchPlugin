@@ -45,7 +45,7 @@
 				id as ticket_id,
 				'ticket' as source,
 				type,
-				from_unixtime(time/1000000) as time, 
+				from_unixtime(t.time/1000000) as time, 
 				from_unixtime(changetime/1000000) as changetime, 
 				component,
 				severity,
@@ -58,9 +58,12 @@
 				status,
 				resolution,
 				summary as name,
-				description as text,
-				keywords
-				from ticket">
+				keywords,
+				CONCAT(description, ' ', GROUP_CONCAT(newvalue SEPARATOR ' ')) as text
+				FROM ticket as t LEFT JOIN ticket_change as tc ON t.id=tc.ticket
+				WHERE tc.field='comment'
+				GROUP BY t.id
+				">
 		</entity>
 	</document>
 
