@@ -94,7 +94,7 @@
 	<field name="source"      type="string" indexed="true" stored="true"/>
 
 	<field name="ticket_id"   type="long" indexed="true" stored="true"/>
-	<field name="type"        type="string" indexed="true" stored="false"/>
+	<field name="type"        type="string" indexed="true" stored="true"/>
 	<field name="changetime"  type="date" indexed="true" stored="false"/> 
 	<field name="component"   type="string" indexed="true" stored="false"/>
 	<field name="severity"    type="string" indexed="true" stored="false"/>
@@ -102,8 +102,8 @@
 	<field name="owner"       type="string" indexed="true" stored="false"/>
 	<field name="cc"          type="string" indexed="true" stored="false"/>
 	<field name="milestone"   type="string" indexed="true" stored="false"/>
-	<field name="status"      type="string" indexed="true" stored="false"/>
-	<field name="resolution"  type="string" indexed="true" stored="false"/>
+	<field name="status"      type="string" indexed="true" stored="true"/>
+	<field name="resolution"  type="string" indexed="true" stored="true"/>
 	<field name="keywords"    type="text" indexed="true" stored="false"/>
 	<field name="ticket_version" type="string" indexed="true" stored="false"/>
 

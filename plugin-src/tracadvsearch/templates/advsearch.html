@@ -88,8 +88,16 @@
 			<py:for each="idx, result in enumerate(results)">
 			  <div class="result ${'even' if not idx % 2 else None}">
 			  <div class="result_header">
-			  	<span class="result_type">${result.source}</span>
+				<span class="result_type ${result.status}">
+					${result.source} 
+					<py:if test="result.source == 'ticket'">#${result.ticket_id}</py:if>
+				</span>
 				<a href="${result.href}" class="searchable">${result.title}</a>
+				<py:if test="result.source == 'ticket'">
+				  	<span class="ticket_details"> 
+					(${result.status} ${result.type}<py:if test="result.status == 'closed'">: ${result.resolution}</py:if>)
+					</span>
+				</py:if>
 			  </div>
 			  <div class="result_summary searchable">${result.summary}</div>
 			  <div class="result_footer">

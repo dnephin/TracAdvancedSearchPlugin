@@ -62,3 +62,8 @@
 .result_summary .searchword4 {
 	font-weight: bold;
 }
+
+.ticket_details {
+	font-size: 0.9em;
+	font-weight: normal;
+}
