@@ -27,3 +27,9 @@ function remove_author_input(elem) {
 	$(elem).parent('div').remove();
 	return false;
 }
+
+$(document).ready(function() {
+	$('#fullsearch input').change(function() {
+		$('#fullsearch input[name="page"]').val(1);
+	})
+})
