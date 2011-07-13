@@ -4,6 +4,7 @@ Backends for TracAdvancedSearchPlugin which implement IAdvSearchBackend.
 import datetime
 import itertools
 import pysolr
+import re
 
 from advsearch import SearchBackendException
 from interface import IAdvSearchBackend
@@ -18,6 +19,9 @@ class PySolrSearchBackEnd(Component):
 
 	SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 	INPUT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+	SPECIAL_CHARACTERS = r'''+-&|!(){}[]^"~*?:\\'''
+	ESCAPE_PATTERN = re.compile('[%s]' % re.escape(SPECIAL_CHARACTERS))
 
 	def __init__(self):
 		solr_url = self.config.get('pysolr_search_backend', 'solr_url', None)
@@ -46,6 +50,10 @@ class PySolrSearchBackEnd(Component):
 		except pysolr.SolrError, e:
 			raise SearchBackendException(e)
 
+	@classmethod
+	def escape(cls, s):
+		return cls.ESCAPE_PATTERN.sub('\\\1', s)
+
 	def query_backend(self, criteria):
 		"""Send a query to solr."""
 
@@ -71,7 +79,7 @@ class PySolrSearchBackEnd(Component):
 		# only include key/value pairs when the value is not empty
 		q_parts = []
 		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
-			q_parts.append("%s: %s" % (k, v))
+			q_parts.append("%s: %s" % (k, self.escape(v)))
 
 		# Ticket only filters
 		status = self._string_from_filters(criteria.get('ticket_statuses'))

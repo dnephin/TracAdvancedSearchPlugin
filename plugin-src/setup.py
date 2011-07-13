@@ -1,7 +1,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracAdvancedSearch'
-VERSION = '0.5.1'
+VERSION = '0.5.3'
 
 setup(name=PACKAGE,
 	version=VERSION,

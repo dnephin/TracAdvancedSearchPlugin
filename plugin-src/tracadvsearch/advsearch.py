@@ -137,7 +137,7 @@ class AdvancedSearchPlugin(Component):
 			total_count += result_count
 			result_map[provider.get_name()] = result_list
 
-		if not result_count:
+		if not total_count:
 			return self._send_response(req, data)
 
 		data['page'] = page
