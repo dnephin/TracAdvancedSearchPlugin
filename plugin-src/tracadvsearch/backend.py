@@ -68,7 +68,7 @@ class PySolrSearchBackEnd(Component):
 			params['start'] = start_point
 
 		# add all fields
-		q['token_text'] = criteria.get('q')
+		q['token_text'] = self.escape(criteria.get('q'))
 		q['source'] = self._string_from_filters(criteria.get('source'))
 		q['author'] = self._string_from_input(criteria.get('author'))
 		q['time'] = self._date_from_range(
@@ -79,7 +79,7 @@ class PySolrSearchBackEnd(Component):
 		# only include key/value pairs when the value is not empty
 		q_parts = []
 		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
-			q_parts.append("%s: %s" % (k, self.escape(v)))
+			q_parts.append("%s: %s" % (k, v))
 
 		# Ticket only filters
 		status = self._string_from_filters(criteria.get('ticket_statuses'))
