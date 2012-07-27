@@ -148,6 +148,10 @@ class PySolrSearchBackEnd(Component):
 			start_formatted = self._format_date(start)
 		else:
 			start_formatted = "*"
+		if end:
+			end_formatted = self._format_date(end)
+		else:
+			end_formatted = "*"
 		return "[%s TO %s]" % (start_formatted, end_formatted)
 
 	def _format_date(self, date_string, default="*"):
