@@ -12,6 +12,7 @@ from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
 from trac.search import shorten_result
+import time
 
 class PySolrSearchBackEnd(Component):
 	"""AdvancedSearchBackend that uses pysolr lib to search Solr."""
@@ -85,7 +86,10 @@ class PySolrSearchBackEnd(Component):
 		status = self._string_from_filters(criteria.get('ticket_statuses'))
 		q_parts.append("(status: %s OR source: wiki)" % status)
 
-		q_string = " AND ".join(q_parts) if q_parts else '*:*'
+		if q_parts:
+			q_string = " AND ".join(q_parts)
+		else:
+			q_string = '*:*'
 
 		try:
 			results = self.conn.search(q_string, **params)
@@ -111,7 +115,7 @@ class PySolrSearchBackEnd(Component):
 
 	def _date_from_solr(self, date_string):
 		"""Return a human friendly date from solr date string."""
-		date = datetime.datetime.strptime(date_string, self.SOLR_DATE_FORMAT)
+		date = self._strptime(date_string, self.SOLR_DATE_FORMAT)
 		return date.strftime(self.INPUT_DATE_FORMAT)
 
 	def _string_from_input(self, value):
@@ -140,17 +144,22 @@ class PySolrSearchBackEnd(Component):
 		if not start and not end:
 			return None
 
-		start_formatted = self._format_date(start) if start else "*"
-		end_formatted = self._format_date(end) if end else "*"
+		if start:
+			start_formatted = self._format_date(start)
+		else:
+			start_formatted = "*"
 		return "[%s TO %s]" % (start_formatted, end_formatted)
 
 	def _format_date(self, date_string, default="*"):
 		"""Format a date as a solr date string."""
 		try:
-			date = datetime.datetime.strptime(
+			date = self._strptime(
 				date_string, self.INPUT_DATE_FORMAT)
 		except ValueError:
 			self.log.warn("Invalid date format: %s" % date_string)
 			return default
 		return date.strftime(self.SOLR_DATE_FORMAT)
+
+	def _strptime(self, date_string, date_format):
+		return datetime.datetime(*(time.strptime(date_string, date_format)[0:6]))
 

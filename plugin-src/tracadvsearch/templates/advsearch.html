@@ -23,7 +23,7 @@
 		  <legend>${_('Source(s)')}:</legend>
 		  <py:for each="filter in source">
 			<input type="checkbox" id="${filter.name}" name="${filter.name}"
-				   checked="${'checked' if filter.active else None}" />
+				   checked="${((filter.active and 'checked') or None)}" />
 			<label for="${filter.name}">${filter.name}</label>
 		  </py:for>
 		</fieldset>
@@ -58,7 +58,7 @@
 		  <legend>${_('Ticket Status')}:</legend>
 		  <py:for each="status in ticket_statuses">
 			<input type="checkbox" name="${status.field_name}"
-				   checked="${'checked' if status.active else None}" />
+				   checked="${((status.active and 'checked') or None)}" />
 			<label for="${status.name}">${status.name}</label>
 		  </py:for>
 		</fieldset>
@@ -86,7 +86,7 @@
 		<div>
 		  <div id="results">
 			<py:for each="idx, result in enumerate(results)">
-			  <div class="result ${'even' if not idx % 2 else None}">
+			  <div class="result ${((not idx % 2 and 'even') or None)}">
 			  <div class="result_header">
 				<span class="result_type ${result.status}">
 					${result.source} 
