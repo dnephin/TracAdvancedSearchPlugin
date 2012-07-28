@@ -32,6 +32,26 @@ from trac.util.translation import _
 from trac.web.chrome import add_stylesheet, add_warning, add_script
 from trac.wiki.formatter import extract_link
 
+import operator
+
+# --- any() from Python 2.5 ---
+try:
+	from __builtin__ import any
+except ImportError:
+	def any(items):
+		for item in items:
+			if item:
+				return True
+		return False
+
+# ---all() from Python 2.5 ---
+try:
+	from __builtin__ import all
+except ImportError:
+	def all(items):
+		return reduce(operator.__and__, items)
+
+__all__ = ("any", "all")
 
 class SearchBackendException(Exception):
 	"""
