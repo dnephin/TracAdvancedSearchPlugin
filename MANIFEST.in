@@ -1,0 +1,6 @@
+include MANIFEST.in
+include LICENSE
+include README
+include CHANGELOG.txt
+recursive-include tracadvsearch *.py *.txt *.html *.css *.js *.png *.pot *.po *.mo
+recursive-include solr *.xml

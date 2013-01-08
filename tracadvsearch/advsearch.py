@@ -10,7 +10,11 @@ import itertools
 from operator import itemgetter
 import pkg_resources
 import re
-import simplejson
+
+try:
+	import json
+except ImportError:
+	import simplejson as json
 
 from trac.perm import IPermissionRequestor
 from trac.ticket.api import ITicketChangeListener
@@ -399,7 +403,7 @@ class StartPoints(object):
 				start_points[backend_name] = prev_start
 			start_points[backend_name] += 1
 
-		return simplejson.dumps(
+		return json.dumps(
 			[
 				{
 					'name': cls.FORMAT_STRING % name,
