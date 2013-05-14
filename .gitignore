@@ -1,6 +1,34 @@
-
-plugin-src/build
-plugin-src/dist
-*.swp
+# App
+docs/_build/
+docs/_themes/
+junit*.xml
 *.pyc
-TracAdvancedSearch.egg-info
+*.pt.py
+.installed.cfg
+.cache
+*~
+*.swp
+*.py[co]
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+#Mr Developer
+.mr.developer.cfg
