@@ -52,12 +52,12 @@
                 words="stopwords.txt"
                 enablePositionIncrements="true"
         />
-        <filter class="solr.WordDelimiterFilterFactory" 
-			generateWordParts="1" 
-			generateNumberParts="1" 
-			catenateWords="1" 
-			catenateNumbers="1" 
-			catenateAll="0" 
+        <filter class="solr.WordDelimiterFilterFactory"
+			generateWordParts="1"
+			generateNumberParts="1"
+			catenateWords="1"
+			catenateNumbers="1"
+			catenateAll="0"
 			splitOnCaseChange="1"
 		/>
         <filter class="solr.LowerCaseFilterFactory"/>
@@ -95,7 +95,7 @@
 
 	<field name="ticket_id"   type="long" indexed="true" stored="true"/>
 	<field name="type"        type="string" indexed="true" stored="true"/>
-	<field name="changetime"  type="date" indexed="true" stored="false"/> 
+	<field name="changetime"  type="date" indexed="true" stored="false"/>
 	<field name="component"   type="string" indexed="true" stored="false"/>
 	<field name="severity"    type="string" indexed="true" stored="false"/>
 	<field name="priority"    type="string" indexed="true" stored="false"/>
@@ -107,6 +107,8 @@
 	<field name="keywords"    type="text" indexed="true" stored="false"/>
 	<field name="ticket_version" type="string" indexed="true" stored="false"/>
 
+	<!--internal to solr-->
+	<field name="_version_" type="long" indexed="true" stored="true" multiValued="false"/>
   </fields>
 
   <uniqueKey>id</uniqueKey>
