@@ -58,8 +58,9 @@
 		  <legend>${_('Ticket Status')}:</legend>
 		  <py:for each="status in ticket_statuses">
 			<input type="checkbox" name="${status.field_name}"
-				   checked="${((status.active and 'checked') or None)}" />
-			<label for="${status.name}">${status.name}</label>
+				   checked="${((status.active and 'checked') or None)}"
+				   id="status_${status.name}" />
+			<label for="status_${status.name}">${status.name}</label>
 		  </py:for>
 		</fieldset>
 
@@ -89,12 +90,12 @@
 			  <div class="result ${((not idx % 2 and 'even') or None)}">
 			  <div class="result_header">
 				<span class="result_type ${result.status}">
-					${result.source} 
+					${result.source}
 					<py:if test="result.source == 'ticket'">#${result.ticket_id}</py:if>
 				</span>
 				<a href="${result.href}" class="searchable">${result.title}</a>
 				<py:if test="result.source == 'ticket'">
-				  	<span class="ticket_details"> 
+				  	<span class="ticket_details">
 					(${result.status} ${result.type}<py:if test="result.status == 'closed'">: ${result.resolution}</py:if>)
 					</span>
 				</py:if>
