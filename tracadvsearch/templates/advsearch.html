@@ -57,10 +57,12 @@
 		<fieldset>
 		  <legend>${_('Ticket Status')}:</legend>
 		  <py:for each="status in ticket_statuses">
-			<input type="checkbox" name="${status.field_name}"
-				   checked="${((status.active and 'checked') or None)}"
-				   id="status_${status.name}" />
-			<label for="status_${status.name}">${status.name}</label>
+			<div>
+				<input type="checkbox" name="${status.field_name}"
+					checked="${((status.active and 'checked') or None)}"
+					id="status_${status.name}" />
+				<label for="status_${status.name}">${status.name}</label>
+			</div>
 		  </py:for>
 		</fieldset>
 
