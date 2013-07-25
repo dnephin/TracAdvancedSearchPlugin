@@ -9,6 +9,7 @@ junit*.xml
 *~
 *.swp
 *.py[co]
+.DS_Store
 
 # Packages
 *.egg
