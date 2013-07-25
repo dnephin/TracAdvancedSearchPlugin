@@ -241,11 +241,11 @@ class AdvancedSearchPlugin(Component):
 
 	def _get_ticket_statuses(self, req_args):
 		"""Create map of ticket statuses."""
-		status_values = ('new', 'assigned', 'closed')
+		status_values = ('new', 'assigned', 'reopened', 'closed')
 		statuses = []
 
-		# Default to new/assigned
-		defaults = set(('new', 'assigned'))
+		# Default to new/assigned/reopened
+		defaults = set(('new', 'reopened', 'assigned'))
 		if any((req_args.get('status_%s' % s) for s in status_values)):
 			defaults = set()
 
@@ -260,13 +260,13 @@ class AdvancedSearchPlugin(Component):
 
 	def _get_quickjump(self, req, query):
 		"""Find quickjump requests if the search comes from the searchbox
-		in the header.  The search is assumed to be from the header searchbox 
+		in the header.  The search is assumed to be from the header searchbox
 		if no page or per_page arguments are found.
 		"""
 		if req.args.get('page') or req.args.get('per_page'):
 			return None
 
-		link = extract_link(self.env, 
+		link = extract_link(self.env,
 			Context.from_request(req, 'advsearch'), query)
 		if isinstance(link, Element):
 			return link.attrib.get('href')
