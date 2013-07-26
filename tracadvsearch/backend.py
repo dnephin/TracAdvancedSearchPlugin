@@ -87,8 +87,17 @@ class PySolrSearchBackEnd(Component):
 		status = self._string_from_filters(criteria.get('ticket_statuses'))
 		q_parts.append('(status:%s OR source:"wiki")' % status)
 
+		# distribute our search query to several fields
 		if 'q' in criteria:
-			q_parts.append('(token_text:(%(q)s) OR name:(%(q)s))' % criteria)
+			field_parts = []
+			field_parts.append('token_text:(%(q)s)' % criteria)
+			field_parts.append('name:(%(q)s)' % criteria)
+			# include only digits, but preserve whitespace
+			digit_query = re.sub('[^0-9 ]', '', criteria['q']).strip()
+			if digit_query:
+				field_parts.append('ticket_id:(%s)' % digit_query)
+
+			q_parts.append('(%s)' % ' OR '.join(field_parts))
 
 		if q_parts:
 			q_string = " AND ".join(q_parts)
