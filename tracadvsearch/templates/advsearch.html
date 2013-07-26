@@ -8,6 +8,7 @@
 	<title>Search<py:if test="q"> Results</py:if></title>
   </head>
   <body>
+
 	<div id="content" class="search">
 
 	  <h1><label for="q">${_('Advanced Search')}</label></h1>
@@ -45,11 +46,15 @@
 		<fieldset id="date_range">
 		  <legend>${_('Date Range')}:</legend>
 		  <label for="date_start">Start</label>
-		  <input type="text" name="date_start" value="${date_start}" /><br />
+		  <input type="text" name="date_start" value="${date_start}" id="date_start"/><br />
 		  <label for="date_end">End</label>
-		  <input type="text" name="date_end" value="${date_end}" /><br />
-		  <em>Format: yyyy-MM-dd HH:mm:ss</em>
+		  <input type="text" name="date_end" value="${date_end}" id="date_end"/><br />
 		</fieldset>
+
+		<script>
+			var start_picker = new Pikaday({field: document.getElementById('date_start')});
+			var end_picker = new Pikaday({field: document.getElementById('date_end')});
+		</script>
 
 		</div>
 

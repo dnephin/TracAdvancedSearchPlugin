@@ -193,7 +193,9 @@ class AdvancedSearchPlugin(Component):
 
 		add_stylesheet(req, 'common/css/search.css')
 		add_stylesheet(req, 'advsearch/css/advsearch.css')
+		add_stylesheet(req, 'advsearch/css/pikaday.css')
 		add_script(req, 'advsearch/js/advsearch.js')
+		add_script(req, 'advsearch/js/pikaday.js')
 		return 'advsearch.html', data, None
 
 	def _merge_results(self, result_map, per_page):

@@ -19,7 +19,7 @@ class PySolrSearchBackEnd(Component):
 	implements(IAdvSearchBackend)
 
 	SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-	INPUT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+	INPUT_DATE_FORMAT = "%a %b %d %Y"
 
 	SPECIAL_CHARACTERS = r'''+-&|!(){}[]^"~*?:\\'''
 	ESCAPE_PATTERN = re.compile('[%s]' % re.escape(SPECIAL_CHARACTERS))
@@ -81,7 +81,7 @@ class PySolrSearchBackEnd(Component):
 		# only include key/value pairs when the value is not empty
 		q_parts = []
 		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
-			q_parts.append('%s:"%s"' % (k, v))
+			q_parts.append('%s:%s' % (k, v))
 
 		# Ticket only filters
 		status = self._string_from_filters(criteria.get('ticket_statuses'))
