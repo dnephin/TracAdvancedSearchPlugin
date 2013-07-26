@@ -72,15 +72,30 @@
 		</fieldset>
 
 		<fieldset>
-		<label for="per_page">Results per page:</label>
-		<select name="per_page">
-			<py:for each="option in [10,25,50,100]">
-				<py:choose>
-					<option py:when="per_page == option" value="$option" selected="selected">$option</option>
-					<option py:otherwise="" value="$option">$option</option>
-				</py:choose>
-			</py:for>
-		</select>
+			<legend>${_('Search Settings')}:</legend>
+			<div>
+			<label for="sort_order">Sort by:</label>
+			<select name="sort_order">
+				<py:for each="option in ['relevance', 'oldest', 'newest']">
+					<py:choose>
+						<option py:when="sort_order == option" value="$option" selected="selected">$option</option>
+						<option py:otherwise="" value="$option">$option</option>
+					</py:choose>
+				</py:for>
+			</select>
+			</div>
+
+			<div>
+			<label for="per_page">Results per page:</label>
+			<select name="per_page">
+				<py:for each="option in [10,25,50,100]">
+					<py:choose>
+						<option py:when="per_page == option" value="$option" selected="selected">$option</option>
+						<option py:otherwise="" value="$option">$option</option>
+					</py:choose>
+				</py:for>
+			</select>
+			</div>
 		</fieldset>
 
 		</div>

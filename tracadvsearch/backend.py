@@ -62,9 +62,18 @@ class PySolrSearchBackEnd(Component):
 		params = {
 			'fl': '*,score', # fields returned
 			'rows': criteria.get('per_page', 10),
-			'qf': '"name^3 token_text"', # field boosts
-			'pf': '"name token_text^3"', # phrase boosts
 		}
+
+		if criteria.get('sort_order') == 'oldest':
+			params['sort'] = 'time asc'
+		elif criteria.get('sort_order') == 'newest':
+			params['sort'] = 'time desc'
+		else: # sort by relevance
+			# field boosts
+			params['qf'] = '"name^3 token_text"'
+			# phrase boosts
+			params['pf'] = '"name token_text^3"'
+
 		# try to find a start offset
 		start_point = criteria['start_points'].get(self.get_name())
 		if start_point:

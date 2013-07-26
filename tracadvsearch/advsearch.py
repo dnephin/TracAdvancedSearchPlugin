@@ -129,6 +129,8 @@ class AdvancedSearchPlugin(Component):
 		except ValueError:
 			page = 1
 
+		sort_order = req.args.getfirst('sort_order', 'relevance')
+
 		data = {
 			'source': self._get_filter_dicts(req.args),
 			'author': [auth for auth in req.args.getlist('author') if auth],
@@ -137,6 +139,7 @@ class AdvancedSearchPlugin(Component):
 			'q': req.args.get('q'),
 			'start_points': StartPoints.parse_args(req.args, self.providers),
 			'per_page': per_page,
+			'sort_order': sort_order,
 			'ticket_statuses': self._get_ticket_statuses(req.args),
 		}
 
