@@ -69,10 +69,8 @@ class PySolrSearchBackEnd(Component):
 		elif criteria.get('sort_order') == 'newest':
 			params['sort'] = 'time desc'
 		else: # sort by relevance
-			# field boosts
-			params['qf'] = '"name^3 token_text"'
 			# phrase boosts
-			params['pf'] = '"name token_text^3"'
+			params['pf'] = 'name token_text^3'
 			# phrase slop
 			params['ps'] = 3
 			# query slop one less than positionIncrementGap to not cross
@@ -105,7 +103,10 @@ class PySolrSearchBackEnd(Component):
 		if 'q' in criteria:
 			field_parts = []
 			field_parts.append('token_text:(%(q)s)' % criteria)
-			field_parts.append('name:(%(q)s)' % criteria)
+			field_parts.append('name:(%(q)s)^3' % criteria)
+			field_parts.append('component:(%(q)s)^0.1' % criteria)
+			field_parts.append('milestone:(%(q)s)^0.1' % criteria)
+			field_parts.append('keywords:(%(q)s)^0.1' % criteria)
 			# include only digits, but preserve whitespace
 			digit_query = re.sub('[^0-9 ]', '', criteria['q']).strip()
 			if digit_query:
