@@ -5,6 +5,7 @@ import datetime
 import itertools
 import pysolr
 import re
+import time
 
 from advsearch import SearchBackendException
 from interface import IAdvSearchBackend
@@ -12,7 +13,6 @@ from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
 from trac.search import shorten_result
-import time
 
 class PySolrSearchBackEnd(Component):
 	"""AdvancedSearchBackend that uses pysolr lib to search Solr."""
@@ -60,8 +60,10 @@ class PySolrSearchBackEnd(Component):
 
 		q = {}
 		params = {
-			'fl': '*,score',
-			'rows': criteria.get('per_page', 10)
+			'fl': '*,score', # fields returned
+			'rows': criteria.get('per_page', 10),
+			'qf': '"name^3 token_text"', # field boosts
+			'pf': '"name token_text^3"', # phrase boosts
 		}
 		# try to find a start offset
 		start_point = criteria['start_points'].get(self.get_name())
@@ -69,7 +71,6 @@ class PySolrSearchBackEnd(Component):
 			params['start'] = start_point
 
 		# add all fields
-		q['token_text'] = self.escape(criteria.get('q'))
 		q['source'] = self._string_from_filters(criteria.get('source'))
 		q['author'] = self._string_from_input(criteria.get('author'))
 		q['time'] = self._date_from_range(
@@ -80,11 +81,14 @@ class PySolrSearchBackEnd(Component):
 		# only include key/value pairs when the value is not empty
 		q_parts = []
 		for k, v in itertools.ifilter(lambda (k, v): v, q.iteritems()):
-			q_parts.append("%s: %s" % (k, v))
+			q_parts.append('%s:"%s"' % (k, v))
 
 		# Ticket only filters
 		status = self._string_from_filters(criteria.get('ticket_statuses'))
-		q_parts.append("(status: %s OR source: wiki)" % status)
+		q_parts.append('(status:%s OR source:"wiki")' % status)
+
+		if 'q' in criteria:
+			q_parts.append('(token_text:(%(q)s) OR name:(%(q)s))' % criteria)
 
 		if q_parts:
 			q_string = " AND ".join(q_parts)
@@ -124,7 +128,7 @@ class PySolrSearchBackEnd(Component):
 			return None
 
 		if type(value) in (list, tuple):
-			return "(%s)" % (" OR ".join([v for v in value if v]))
+			return "(%s)" % (" OR ".join(['"%s"' % v for v in value if v]))
 
 		return value
 
@@ -137,7 +141,7 @@ class PySolrSearchBackEnd(Component):
 			return None
 
 		# add filters that are set as active
-		return "(%s)" % (" OR ".join(name_list))
+		return '("%s")' % ('" OR "'.join(name_list))
 
 	def _date_from_range(self, start, end):
 		"""Return a date range in solr query syntax."""
