@@ -61,7 +61,7 @@ class PySolrSearchBackEnd(Component):
 		q = {}
 		params = {
 			'fl': '*,score', # fields returned
-			'rows': criteria.get('per_page', 10),
+			'rows': criteria.get('per_page', 15),
 		}
 
 		if criteria.get('sort_order') == 'oldest':

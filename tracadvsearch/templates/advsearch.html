@@ -88,7 +88,7 @@
 			<div>
 			<label for="per_page">Results per page:</label>
 			<select name="per_page">
-				<py:for each="option in [10,25,50,100]">
+				<py:for each="option in [10, 15, 25, 50, 100]">
 					<py:choose>
 						<option py:when="per_page == option" value="$option" selected="selected">$option</option>
 						<option py:otherwise="" value="$option">$option</option>

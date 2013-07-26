@@ -77,7 +77,7 @@ class AdvancedSearchPlugin(Component):
 
 	providers = ExtensionPoint(IAdvSearchBackend)
 
-	DEFAULT_PER_PAGE = 10
+	DEFAULT_PER_PAGE = 15
 
 	def _get_source_filters(self):
 		return set(itertools.chain(*(p.get_sources() for p in self.providers)))
