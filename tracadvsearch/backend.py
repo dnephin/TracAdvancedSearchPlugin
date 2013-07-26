@@ -73,6 +73,11 @@ class PySolrSearchBackEnd(Component):
 			params['qf'] = '"name^3 token_text"'
 			# phrase boosts
 			params['pf'] = '"name token_text^3"'
+			# phrase slop
+			params['ps'] = 3
+			# query slop one less than positionIncrementGap to not cross
+			# multiValue boundaries
+			params['qs'] = 99
 
 		# try to find a start offset
 		start_point = criteria['start_points'].get(self.get_name())
