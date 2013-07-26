@@ -18,6 +18,7 @@ methods to implement.
 See http://trac.edgewall.org/wiki/TracDev for more information about developing
 a Trac plugin.
 
+![Advanced Search Plugin Screenshot][screenshot]
 
 How it works
 ------------
@@ -110,3 +111,5 @@ Your `trac.ini` may already have a components section.
 [components]
 trac.search.web_ui.SearchModule = disabled
 ```
+
+[screenshot]: https://raw.github.com/blampe/TracAdvancedSearchPlugin/gh-pages/example.png "Screenshot"
