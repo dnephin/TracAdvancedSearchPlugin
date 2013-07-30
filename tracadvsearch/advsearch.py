@@ -77,7 +77,7 @@ class AdvancedSearchPlugin(Component):
 
 	providers = ExtensionPoint(IAdvSearchBackend)
 
-	DEFAULT_PER_PAGE = 10
+	DEFAULT_PER_PAGE = 15
 
 	def _get_source_filters(self):
 		return set(itertools.chain(*(p.get_sources() for p in self.providers)))
@@ -129,6 +129,8 @@ class AdvancedSearchPlugin(Component):
 		except ValueError:
 			page = 1
 
+		sort_order = req.args.getfirst('sort_order', 'relevance')
+
 		data = {
 			'source': self._get_filter_dicts(req.args),
 			'author': [auth for auth in req.args.getlist('author') if auth],
@@ -137,6 +139,7 @@ class AdvancedSearchPlugin(Component):
 			'q': req.args.get('q'),
 			'start_points': StartPoints.parse_args(req.args, self.providers),
 			'per_page': per_page,
+			'sort_order': sort_order,
 			'ticket_statuses': self._get_ticket_statuses(req.args),
 		}
 
@@ -193,7 +196,9 @@ class AdvancedSearchPlugin(Component):
 
 		add_stylesheet(req, 'common/css/search.css')
 		add_stylesheet(req, 'advsearch/css/advsearch.css')
+		add_stylesheet(req, 'advsearch/css/pikaday.css')
 		add_script(req, 'advsearch/js/advsearch.js')
+		add_script(req, 'advsearch/js/pikaday.js')
 		return 'advsearch.html', data, None
 
 	def _merge_results(self, result_map, per_page):
@@ -241,11 +246,11 @@ class AdvancedSearchPlugin(Component):
 
 	def _get_ticket_statuses(self, req_args):
 		"""Create map of ticket statuses."""
-		status_values = ('new', 'assigned', 'closed')
+		status_values = ('new', 'assigned', 'reopened', 'closed')
 		statuses = []
 
-		# Default to new/assigned
-		defaults = set(('new', 'assigned'))
+		# Default to new/assigned/reopened
+		defaults = set(('new', 'reopened', 'assigned'))
 		if any((req_args.get('status_%s' % s) for s in status_values)):
 			defaults = set()
 
@@ -260,13 +265,13 @@ class AdvancedSearchPlugin(Component):
 
 	def _get_quickjump(self, req, query):
 		"""Find quickjump requests if the search comes from the searchbox
-		in the header.  The search is assumed to be from the header searchbox 
+		in the header.  The search is assumed to be from the header searchbox
 		if no page or per_page arguments are found.
 		"""
 		if req.args.get('page') or req.args.get('per_page'):
 			return None
 
-		link = extract_link(self.env, 
+		link = extract_link(self.env,
 			Context.from_request(req, 'advsearch'), query)
 		if isinstance(link, Element):
 			return link.attrib.get('href')

@@ -2,12 +2,15 @@
 Trac Advanced Search Plugin
 ============================
 
-An advanced search plugin for the open source Trac project 
-(http://trac.edgewall.org/). This Trac plugin allows you to use a full-text 
-search engine (such as Apache Solr) as the search backend for performing 
+An advanced search plugin for the open source Trac project
+(http://trac.edgewall.org/). This Trac plugin allows you to use a full-text
+search engine (such as Apache Solr) as the search backend for performing
 search in Trac.  This plugin also includes a backend for Apache Solr
 (http://lucene.apache.org/solr/), but other plugins can use the extension point
 provided by this plugin to query a different backend.
+
+This plugin is known to be compatible with Trac 0.12 with Solr 3.1, as well as
+Trac 1.0.1 with Solr 4.3.1.
 
 See the interface in `plugin-src/advsearch/interface.py` for details about which
 methods to implement.
@@ -15,15 +18,16 @@ methods to implement.
 See http://trac.edgewall.org/wiki/TracDev for more information about developing
 a Trac plugin.
 
+![Advanced Search Plugin Screenshot][screenshot]
 
 How it works
 ------------
 
-Once your existing tickets/wiki documents are indexed in the backend you can 
+Once your existing tickets/wiki documents are indexed in the backend you can
 make requests using the *Advanced Search* form.  These searches will be handled
 by the search backend you have configured in trac.ini.  When new documents or
-tickets are added `upsert_document()` will be called on each search backend 
-to update the index immediately. 
+tickets are added `upsert_document()` will be called on each search backend
+to update the index immediately.
 
 
 
@@ -53,7 +57,7 @@ python setup.py bdist_egg
 cp ./dist/TracAdvancedSearch-*.egg <trac_environment_home>/plugins
 ```
 
-2. Setup the search backend.  If you're using solr, copy and modify the 
+2. Setup the search backend.  If you're using solr, copy and modify the
 configuration files provided.
 ```
 cp ./solr/conf/* <solr_home>/conf
@@ -64,7 +68,7 @@ using solr, see `./solr/conf/data-config.xml`
 
 4. Configure your trac.ini (see the Configuration section below).
 
-5. Restart the trac server. This will differ based on how you are running trac 
+5. Restart the trac server. This will differ based on how you are running trac
 (apache, tracd, etc).
 
 That's it. You should see an Advanced Search button in the main navbar.
@@ -80,7 +84,7 @@ you're using the default pysolr backend, add something like this:
 ```
 [pysolr_search_backend]
 solr_url = http://localhost:8983/solr/
-timeout = 30 
+timeout = 30
 
 [advanced_search_plugin]
 menu_label = Real Search
@@ -105,5 +109,7 @@ Your `trac.ini` may already have a components section.
 
 ```
 [components]
-trac.search.web_ui.SearchModule = disabled  
+trac.search.web_ui.SearchModule = disabled
 ```
+
+[screenshot]: https://raw.github.com/blampe/TracAdvancedSearchPlugin/gh-pages/example.png "Screenshot"

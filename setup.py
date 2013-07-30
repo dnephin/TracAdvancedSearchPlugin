@@ -4,7 +4,7 @@ import sys
 from setuptools import setup
 
 PACKAGE = 'TracAdvancedSearch'
-VERSION = '0.5.4'
+VERSION = '0.6.0'
 
 REQUIRES = [
 	'Trac>=0.11',

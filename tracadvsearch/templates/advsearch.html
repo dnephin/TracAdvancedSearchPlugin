@@ -8,6 +8,7 @@
 	<title>Search<py:if test="q"> Results</py:if></title>
   </head>
   <body>
+
 	<div id="content" class="search">
 
 	  <h1><label for="q">${_('Advanced Search')}</label></h1>
@@ -45,11 +46,15 @@
 		<fieldset id="date_range">
 		  <legend>${_('Date Range')}:</legend>
 		  <label for="date_start">Start</label>
-		  <input type="text" name="date_start" value="${date_start}" /><br />
+		  <input type="text" name="date_start" value="${date_start}" id="date_start"/><br />
 		  <label for="date_end">End</label>
-		  <input type="text" name="date_end" value="${date_end}" /><br />
-		  <em>Format: yyyy-MM-dd HH:mm:ss</em>
+		  <input type="text" name="date_end" value="${date_end}" id="date_end"/><br />
 		</fieldset>
+
+		<script>
+			var start_picker = new Pikaday({field: document.getElementById('date_start')});
+			var end_picker = new Pikaday({field: document.getElementById('date_end')});
+		</script>
 
 		</div>
 
@@ -57,22 +62,40 @@
 		<fieldset>
 		  <legend>${_('Ticket Status')}:</legend>
 		  <py:for each="status in ticket_statuses">
-			<input type="checkbox" name="${status.field_name}"
-				   checked="${((status.active and 'checked') or None)}" />
-			<label for="${status.name}">${status.name}</label>
+			<div>
+				<input type="checkbox" name="${status.field_name}"
+					checked="${((status.active and 'checked') or None)}"
+					id="status_${status.name}" />
+				<label for="status_${status.name}">${status.name}</label>
+			</div>
 		  </py:for>
 		</fieldset>
 
 		<fieldset>
-		<label for="per_page">Results per page:</label>
-		<select name="per_page">
-			<py:for each="option in [10,25,50,100]">
-				<py:choose>
-					<option py:when="per_page == option" value="$option" selected="selected">$option</option>
-					<option py:otherwise="" value="$option">$option</option>
-				</py:choose>
-			</py:for>
-		</select>
+			<legend>${_('Search Settings')}:</legend>
+			<div>
+			<label for="sort_order">Sort by:</label>
+			<select name="sort_order">
+				<py:for each="option in ['relevance', 'oldest', 'newest']">
+					<py:choose>
+						<option py:when="sort_order == option" value="$option" selected="selected">$option</option>
+						<option py:otherwise="" value="$option">$option</option>
+					</py:choose>
+				</py:for>
+			</select>
+			</div>
+
+			<div>
+			<label for="per_page">Results per page:</label>
+			<select name="per_page">
+				<py:for each="option in [10, 15, 25, 50, 100]">
+					<py:choose>
+						<option py:when="per_page == option" value="$option" selected="selected">$option</option>
+						<option py:otherwise="" value="$option">$option</option>
+					</py:choose>
+				</py:for>
+			</select>
+			</div>
 		</fieldset>
 
 		</div>
@@ -89,12 +112,12 @@
 			  <div class="result ${((not idx % 2 and 'even') or None)}">
 			  <div class="result_header">
 				<span class="result_type ${result.status}">
-					${result.source} 
+					${result.source}
 					<py:if test="result.source == 'ticket'">#${result.ticket_id}</py:if>
 				</span>
 				<a href="${result.href}" class="searchable">${result.title}</a>
 				<py:if test="result.source == 'ticket'">
-				  	<span class="ticket_details"> 
+				  	<span class="ticket_details">
 					(${result.status} ${result.type}<py:if test="result.status == 'closed'">: ${result.resolution}</py:if>)
 					</span>
 				</py:if>

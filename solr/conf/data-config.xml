@@ -1,8 +1,8 @@
 <!--
   Data Import Configuration
 
-  This will load all your existing ticket and wiki data into the solr index.  
-  If you use a database other then mysql you may need to change the queries 
+  This will load all your existing ticket and wiki data into the solr index.
+  If you use a database other then mysql you may need to change the queries
   slightly. You will likely have to change the connection url as well.
 
   To start this data import hit the following url (assumes solr is running
@@ -14,24 +14,24 @@
 -->
 <dataConfig>
 
-	<dataSource 
-		type="JdbcDataSource" 
-		driver="com.mysql.jdbc.Driver" 
-		url="jdbc:mysql://localhost/trac12" 
+	<dataSource
+		type="JdbcDataSource"
+		driver="com.mysql.jdbc.Driver"
+		url="jdbc:mysql://localhost/trac12"
 		user="tracuser"
 		password="password"
 		batchSize="1000"
 	/>
 
 	<document>
-		<entity 
-			name="wiki" 
-			query="select 
-				name, 
-				version, 
-				from_unixtime(time/1000000) as time, 
-				author, 
-				text, 
+		<entity
+			name="wiki"
+			query="select
+				name,
+				version,
+				from_unixtime(ROUND(time/1000000)) as time,
+				author,
+				text,
 				comment,
 				concat('wiki_',name) as id,
 				'wiki' as source
@@ -45,8 +45,8 @@
 				id as ticket_id,
 				'ticket' as source,
 				type,
-				from_unixtime(t.time/1000000) as time, 
-				from_unixtime(changetime/1000000) as changetime, 
+				from_unixtime(ROUND(t.time/1000000)) as time,
+				from_unixtime(ROUND(changetime/1000000)) as changetime,
 				component,
 				severity,
 				priority,
