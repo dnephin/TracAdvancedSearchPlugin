@@ -101,14 +101,15 @@ class PySolrSearchBackEnd(Component):
 
 		# distribute our search query to several fields
 		if 'q' in criteria:
+			q = self.escape(criteria['q'])
 			field_parts = []
-			field_parts.append('token_text:(%(q)s)' % criteria)
-			field_parts.append('name:(%(q)s)^3' % criteria)
-			field_parts.append('component:(%(q)s)^0.1' % criteria)
-			field_parts.append('milestone:(%(q)s)^0.1' % criteria)
-			field_parts.append('keywords:(%(q)s)^0.1' % criteria)
+			field_parts.append('text:(%s)' % q)
+			field_parts.append('name:(%s)^3' % q)
+			field_parts.append('component:(%s)^0.1' % q)
+			field_parts.append('milestone:(%s)^0.1' % q)
+			field_parts.append('keywords:(%s)^0.1' % q)
 			# include only digits, but preserve whitespace
-			digit_query = re.sub('[^0-9 ]', '', criteria['q']).strip()
+			digit_query = re.sub('[^0-9 ]', '', q).strip()
 			if digit_query:
 				field_parts.append('ticket_id:(%s)' % digit_query)
 
