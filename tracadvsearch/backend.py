@@ -100,10 +100,10 @@ class PySolrSearchBackEnd(Component):
 		q_parts.append('(status:%s OR source:"wiki")' % status)
 
 		# distribute our search query to several fields
-		if 'q' in criteria:
+		if 'q' in criteria and criteria['q']:
 			q = self.escape(criteria['q'])
 			field_parts = []
-			field_parts.append('text:(%s)' % q)
+			field_parts.append('token_text:(%s)' % q)
 			field_parts.append('name:(%s)^3' % q)
 			field_parts.append('component:(%s)^0.1' % q)
 			field_parts.append('milestone:(%s)^0.1' % q)
