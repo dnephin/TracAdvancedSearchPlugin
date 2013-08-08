@@ -4,7 +4,6 @@ Backends for TracAdvancedSearchPlugin which implement IAdvSearchBackend.
 import datetime
 import itertools
 import pysolr
-import re
 import time
 
 from advsearch import SearchBackendException
@@ -22,7 +21,6 @@ class PySolrSearchBackEnd(Component):
 	INPUT_DATE_FORMAT = "%a %b %d %Y"
 
 	SPECIAL_CHARACTERS = r'''+-&|!(){}[]^"~*?:\\'''
-	ESCAPE_PATTERN = re.compile('[%s]' % re.escape(SPECIAL_CHARACTERS))
 
 	def __init__(self):
 		solr_url = self.config.get('pysolr_search_backend', 'solr_url', None)
@@ -51,10 +49,6 @@ class PySolrSearchBackEnd(Component):
 		except pysolr.SolrError, e:
 			raise SearchBackendException(e)
 
-	@classmethod
-	def escape(cls, s):
-		return cls.ESCAPE_PATTERN.sub('\\\1', s)
-
 	def query_backend(self, criteria):
 		"""Send a query to solr."""
 
@@ -62,6 +56,12 @@ class PySolrSearchBackEnd(Component):
 		params = {
 			'fl': '*,score', # fields returned
 			'rows': criteria.get('per_page', 15),
+			# see https://cwiki.apache.org/confluence/display/solr/The+DisMax+Query+Parser
+			'defType': 'edismax',
+			# favor phrases in the ticket body, exact matches in the name
+			'pf': 'token_text name^2 ticket_id',
+			'qf': 'token_text name^2 ticket_id component milestone keywords',
+
 		}
 
 		if criteria.get('sort_order') == 'oldest':
@@ -69,13 +69,7 @@ class PySolrSearchBackEnd(Component):
 		elif criteria.get('sort_order') == 'newest':
 			params['sort'] = 'time desc'
 		else: # sort by relevance
-			# phrase boosts
-			params['pf'] = 'name token_text^3'
-			# phrase slop
-			params['ps'] = 3
-			# query slop one less than positionIncrementGap to not cross
-			# multiValue boundaries
-			params['qs'] = 99
+			pass
 
 		# try to find a start offset
 		start_point = criteria['start_points'].get(self.get_name())
@@ -83,7 +77,7 @@ class PySolrSearchBackEnd(Component):
 			params['start'] = start_point
 
 		# add all fields
-		q['source'] = self._string_from_filters(criteria.get('source'))
+		q['source'] = self._string_from_filters(criteria.get('source')) or '("wiki" OR "ticket")'
 		q['author'] = self._string_from_input(criteria.get('author'))
 		q['time'] = self._date_from_range(
 			criteria.get('date_start'),
@@ -97,28 +91,16 @@ class PySolrSearchBackEnd(Component):
 
 		# Ticket only filters
 		status = self._string_from_filters(criteria.get('ticket_statuses'))
-		q_parts.append('(status:%s OR source:"wiki")' % status)
+		params['fq'] = '(status:(%s) OR source:"wiki")' % status
 
 		# distribute our search query to several fields
-		if 'q' in criteria:
-			q = self.escape(criteria['q'])
-			field_parts = []
-			field_parts.append('text:(%s)' % q)
-			field_parts.append('name:(%s)^3' % q)
-			field_parts.append('component:(%s)^0.1' % q)
-			field_parts.append('milestone:(%s)^0.1' % q)
-			field_parts.append('keywords:(%s)^0.1' % q)
-			# include only digits, but preserve whitespace
-			digit_query = re.sub('[^0-9 ]', '', q).strip()
-			if digit_query:
-				field_parts.append('ticket_id:(%s)' % digit_query)
-
-			q_parts.append('(%s)' % ' OR '.join(field_parts))
-
-		if q_parts:
-			q_string = " AND ".join(q_parts)
+		if 'q' in criteria and criteria['q']:
+			# edismax handles escaping for us
+			q_parts.append('(%s)' % criteria['q'])
 		else:
-			q_string = '*:*'
+			q_parts.append('*:*')
+
+		q_string = " AND ".join(q_parts)
 
 		try:
 			results = self.conn.search(q_string, **params)
