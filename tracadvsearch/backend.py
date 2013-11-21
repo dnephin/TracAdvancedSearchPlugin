@@ -131,7 +131,7 @@ class PySolrSearchBackEnd(Component):
 		def safe_decode(date_string):
 			if isinstance(date_string, str):
 				lang, encoding = locale.getlocale()
-				encoding = encoding if encoding else self.EFAULT_DATE_ENCODING
+				encoding = encoding if encoding else self.DEFAULT_DATE_ENCODING
 				return unicode(date_string, encoding)
 			return date_string
 
