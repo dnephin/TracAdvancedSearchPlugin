@@ -38,6 +38,26 @@ from trac.wiki.formatter import extract_link
 
 import operator
 
+
+CONFIG_SECTION_NAME = 'advanced_search_plugin'
+CONFIG_FIELD = {
+	'menu_label': (
+		CONFIG_SECTION_NAME,
+		'menu_label',
+		'Advanced Search',
+	),
+	'ticket_status': (
+		CONFIG_SECTION_NAME,
+		'ticket_status',
+		'new, assigned, reopened, closed',
+	),
+	'ticket_status_enable': (
+		CONFIG_SECTION_NAME,
+		'ticket_status_enable',
+		'new, assigned, reopened',
+	),
+}
+
 # --- any() from Python 2.5 ---
 try:
 	from __builtin__ import any
@@ -56,6 +76,12 @@ except ImportError:
 		return reduce(operator.__and__, items)
 
 __all__ = ("any", "all")
+
+
+def _get_config_values(config, option_name):
+	values = config.get(*CONFIG_FIELD[option_name])
+	return [value.strip() for value in values.split(',')]
+
 
 class SearchBackendException(Exception):
 	"""
@@ -88,11 +114,7 @@ class AdvancedSearchPlugin(Component):
 
 	def get_navigation_items(self, req):
 		if 'SEARCH_VIEW' in req.perm:
-			label = self.config.get(
-				'advanced_search_plugin',
-				'menu_label',
-				'Advanced Search'
-			)
+			label = self.config.get(*CONFIG_FIELD['menu_label'])
 			yield ('mainnav',
 				'advsearch',
 				html.A(_(label), href=self.env.href.advsearch())
@@ -246,11 +268,11 @@ class AdvancedSearchPlugin(Component):
 
 	def _get_ticket_statuses(self, req_args):
 		"""Create map of ticket statuses."""
-		status_values = ('new', 'assigned', 'reopened', 'closed')
+		status_values = _get_config_values(self.config, 'ticket_status')
 		statuses = []
 
 		# Default to new/assigned/reopened
-		defaults = set(('new', 'reopened', 'assigned'))
+		defaults = set(_get_config_values(self.config, 'ticket_status_enable'))
 		if any((req_args.get('status_%s' % s) for s in status_values)):
 			defaults = set()
 
