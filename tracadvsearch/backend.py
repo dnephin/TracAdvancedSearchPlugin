@@ -3,6 +3,7 @@ Backends for TracAdvancedSearchPlugin which implement IAdvSearchBackend.
 """
 import datetime
 import itertools
+import locale
 import pysolr
 import time
 
@@ -19,6 +20,7 @@ class PySolrSearchBackEnd(Component):
 
 	SOLR_DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 	INPUT_DATE_FORMAT = "%a %b %d %Y"
+	DEFAULT_DATE_ENCODING = "utf-8"
 
 	SPECIAL_CHARACTERS = r'''+-&|!(){}[]^"~*?:\\'''
 
@@ -126,8 +128,15 @@ class PySolrSearchBackEnd(Component):
 
 	def _date_from_solr(self, date_string):
 		"""Return a human friendly date from solr date string."""
+		def safe_decode(date_string):
+			if isinstance(date_string, str):
+				lang, encoding = locale.getlocale()
+				encoding = encoding if encoding else self.EFAULT_DATE_ENCODING
+				return unicode(date_string, encoding)
+			return date_string
+
 		date = self._strptime(date_string, self.SOLR_DATE_FORMAT)
-		return date.strftime(self.INPUT_DATE_FORMAT)
+		return safe_decode(date.strftime(self.INPUT_DATE_FORMAT))
 
 	def _string_from_input(self, value):
 		"""Return a value string formatted in solr query syntax."""
