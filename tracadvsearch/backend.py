@@ -135,8 +135,7 @@ class AsyncSolrIndexer(threading.Thread):
 					method_name, item = self.queue.get(block=True)
 					methodcaller(method_name, item)(self)
 				except Exception, e:
-					import traceback
-					self.backend.log.error(traceback.format_exc(limit=None))
+					self.backend.log.exception(e)
 					self.backend.log.error(item)
 				self.queue.task_done()
 				if not prev_available:
