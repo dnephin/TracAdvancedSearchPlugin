@@ -35,6 +35,11 @@ CONFIG_FIELD = {
 		'async_indexing',
 		False,
 	),
+	'async_queue_maxsize': (
+		CONFIG_SECTION_NAME,
+		'async_queue_maxsize',
+		0,
+	),
 }
 
 
@@ -115,9 +120,9 @@ class AsyncSolrIndexer(threading.Thread):
 
 	SLEEP_INTERVAL = (60, 3600, 10)
 
-	def __init__(self, backend):
+	def __init__(self, backend, maxsize):
 		self.backend = backend
-		self.queue = Queue.Queue()
+		self.queue = Queue.Queue(maxsize)
 		threading.Thread.__init__(self)
 		self._name = self.__class__.__name__
 
@@ -159,14 +164,20 @@ class AsyncSolrIndexer(threading.Thread):
 		return available
 
 	def upsert(self, doc):
-		self.queue.put(('upsert_index', doc))
+		try:
+			self.queue.put(('upsert_index', doc), block=False)
+		except Queue.Full, e:
+			self.backend.log.error('%s: Queue is full, cannot put: %s' % (self._name, doc))
 
 	def upsert_index(self, doc):
 		self.backend.log.debug('%s: upsert id=%s' % (self._name, doc.get('id')))
 		self.backend.conn.add([doc])
 
 	def delete(self, identifier):
-		self.queue.put(('delete_index', identifier))
+		try:
+			self.queue.put(('delete_index', identifier), block=False)
+		except Queue.Full, e:
+			self.backend.log.error('%s: Queue is full, cannot put: %s' % (self._name, identifier))
 
 	def delete_index(self, identifier):
 		self.backend.log.debug('%s: delete id=%s' % (self._name, identifier))
@@ -192,7 +203,8 @@ class PySolrSearchBackEnd(Component):
 
 		self.async_indexing = self.config.getbool(*CONFIG_FIELD['async_indexing'])
 		if self.async_indexing:
-			self.indexer = AsyncSolrIndexer(self)
+			maxsize = self.config.getint(*CONFIG_FIELD['async_queue_maxsize'])
+			self.indexer = AsyncSolrIndexer(self, maxsize)
 			self.indexer.start()
 		else:
 			self.indexer = SolrIndexer(self)
