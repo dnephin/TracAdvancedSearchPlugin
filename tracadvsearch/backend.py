@@ -5,6 +5,7 @@ import datetime
 import itertools
 import locale
 import pysolr
+import sys
 import threading
 import time
 import Queue
@@ -57,16 +58,40 @@ def _get_incremental_value(initial, next_, step):
 			yield next_
 
 
-class AbstractIndexer(object):
+def implements_indexer(*interfaces):
+	def iter_interface_methods(interface):
+		for key, value in interface.__dict__.items():
+			if callable(value):
+				yield key
+
+	def __metaclass__(name, bases, d):
+		cls = type(name, bases, d)
+		for interface in interfaces:
+			for method in iter_interface_methods(interface):
+				try:
+					getattr(cls, method)
+				except AttributeError:
+					_msg = "Missing method %r on %r from interface %r" % (method, cls, interface)
+					raise NotImplementedError(_msg)
+		return cls
+
+	cls_scope = sys._getframe(1).f_locals
+	cls_scope['__metaclass__'] = __metaclass__
+
+
+class IIndexer(object):
+	"""Interface to provides indexing process for PySolrSearchBackEnd."""
 
 	def upsert(self, doc):
-		raise NotImplementedError
+		"""Indexing to insert or update a document."""
 
 	def delete(self, identifier):
-		raise NotImplementedError
+		"""Indexing to remove a document."""
 
 
-class SolrIndexer(AbstractIndexer):
+class SolrIndexer(object):
+	"""Synchronous Indexer for PySolrSearchBackEnd."""
+	implements_indexer(IIndexer)
 
 	def __init__(self, backend):
 		self.backend = backend
@@ -84,7 +109,9 @@ class SolrIndexer(AbstractIndexer):
 			raise SearchBackendException(e)
 
 
-class AsyncSolrIndexer(AbstractIndexer, threading.Thread):
+class AsyncSolrIndexer(threading.Thread):
+	"""Asynchronous Indexer for PySolrSearchBackEnd."""
+	implements_indexer(IIndexer)
 
 	SLEEP_INTERVAL = (60, 3600, 10)
 
