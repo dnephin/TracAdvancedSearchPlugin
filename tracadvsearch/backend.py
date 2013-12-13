@@ -114,6 +114,25 @@ class SolrIndexer(object):
 			raise SearchBackendException(e)
 
 
+class SimpleLifoQueue(list):
+
+	def __init__(self, maxsize=0):
+		self.maxsize = maxsize
+
+	def put(self, item):
+		if len(self) >= self.maxsize:
+			raise Queue.Full
+		self.append(item)
+
+	def get(self):
+		if len(self) > 0:
+			return self.pop()
+		return None
+
+	def empty(self):
+		return len(self) == 0
+
+
 class AsyncSolrIndexer(threading.Thread):
 	"""Asynchronous Indexer for PySolrSearchBackEnd."""
 	implements_indexer(IIndexer)
@@ -123,6 +142,7 @@ class AsyncSolrIndexer(threading.Thread):
 	def __init__(self, backend, maxsize):
 		self.backend = backend
 		self.queue = Queue.Queue(maxsize)
+		self.recovery_queue = SimpleLifoQueue(maxsize)
 		threading.Thread.__init__(self)
 		self._name = self.__class__.__name__
 
@@ -131,19 +151,33 @@ class AsyncSolrIndexer(threading.Thread):
 		interval = self.interval_generator
 		while True:
 			while self.is_available():
-				try:
-					method_name, item = self.queue.get(block=True)
-					methodcaller(method_name, item)(self)
-				except Exception, e:
-					self.backend.log.exception(e)
-					self.backend.log.error(item)
-				self.queue.task_done()
+				self.indexing()
 				if not prev_available:
 					interval = self.interval_generator
 					prev_available = True
 			else:
 				prev_available = False
 				time.sleep(interval.next())
+
+	def indexing(self):
+		def get_item():
+			if self.recovery_queue.empty():
+				return self.queue.get(block=True)
+			else:
+				return self.recovery_queue.get()
+
+		try:
+			method_name, item = get_item()
+			methodcaller(method_name, item)(self)
+		except Exception, e:
+			self.backend.log.exception(e)
+			try:
+				self.recovery_queue.put((method_name, item))
+			except Queue.Full, e:
+				_msg = '%s: Recovery Queue is full, cannot put: %s'
+				self.backend.log.error(_msg % (self._name, item))
+		else:
+			self.queue.task_done()
 
 	@property
 	def interval_generator(self):
