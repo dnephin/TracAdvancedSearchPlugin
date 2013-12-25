@@ -90,7 +90,7 @@ class SimpleLifoQueue(list):
 		self.maxsize = maxsize
 
 	def put(self, item):
-		if len(self) >= self.maxsize:
+		if self.maxsize > 0 and len(self) >= self.maxsize:
 			raise Queue.Full
 		self.append(item)
 
