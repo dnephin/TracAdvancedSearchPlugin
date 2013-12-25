@@ -13,6 +13,7 @@ from operator import methodcaller
 
 from advsearch import SearchBackendException
 from interface import IAdvSearchBackend
+from interface import IIndexer
 from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
@@ -63,40 +64,9 @@ def _get_incremental_value(initial, next_, step):
 			yield next_
 
 
-def implements_indexer(*interfaces):
-	def iter_interface_methods(interface):
-		for key, value in interface.__dict__.items():
-			if callable(value):
-				yield key
-
-	def __metaclass__(name, bases, d):
-		cls = type(name, bases, d)
-		for interface in interfaces:
-			for method in iter_interface_methods(interface):
-				try:
-					getattr(cls, method)
-				except AttributeError:
-					_msg = "Missing method %r on %r from interface %r" % (method, cls, interface)
-					raise NotImplementedError(_msg)
-		return cls
-
-	cls_scope = sys._getframe(1).f_locals
-	cls_scope['__metaclass__'] = __metaclass__
-
-
-class IIndexer(object):
-	"""Interface to provides indexing process for PySolrSearchBackEnd."""
-
-	def upsert(self, doc):
-		"""Indexing to insert or update a document."""
-
-	def delete(self, identifier):
-		"""Indexing to remove a document."""
-
-
 class SolrIndexer(object):
 	"""Synchronous Indexer for PySolrSearchBackEnd."""
-	implements_indexer(IIndexer)
+	implements(IIndexer)
 
 	def __init__(self, backend):
 		self.backend = backend
@@ -135,7 +105,7 @@ class SimpleLifoQueue(list):
 
 class AsyncSolrIndexer(threading.Thread):
 	"""Asynchronous Indexer for PySolrSearchBackEnd."""
-	implements_indexer(IIndexer)
+	implements(IIndexer)
 
 	SLEEP_INTERVAL = (60, 3600, 10)
 
