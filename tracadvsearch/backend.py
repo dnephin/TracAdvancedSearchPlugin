@@ -121,12 +121,14 @@ class AsyncSolrIndexer(threading.Thread):
 		interval = self.interval_generator
 		while True:
 			while self.is_available():
-				self.indexing()
-				if not prev_available:
-					interval = self.interval_generator
-					prev_available = True
+				while self.indexing():
+					if not prev_available:
+						interval = self.interval_generator  # reset
+						prev_available = True
+				else:
+					prev_available = False
+					time.sleep(interval.next())
 			else:
-				prev_available = False
 				time.sleep(interval.next())
 
 	def indexing(self):
@@ -136,10 +138,12 @@ class AsyncSolrIndexer(threading.Thread):
 			else:
 				return self.recovery_queue.get()
 
+		result = True
 		try:
 			method_name, item = get_item()
 			methodcaller(method_name, item)(self)
 		except Exception, e:
+			result = False
 			self.backend.log.exception(e)
 			try:
 				self.recovery_queue.put((method_name, item))
@@ -148,6 +152,7 @@ class AsyncSolrIndexer(threading.Thread):
 				self.backend.log.error(_msg % (self._name, item))
 		else:
 			self.queue.task_done()
+		return result
 
 	@property
 	def interval_generator(self):
