@@ -92,6 +92,16 @@ menu_label = Real Search
 
 button_label and timeout are both optional.
 
+The default pysolr backend queries to solr for indexing synchronously.
+If you want to do indexing asynchronously, add like this:
+
+```
+[pysolr_search_backend]
+async_indexing = true
+async_queue_maxsize = 10000  # if 0, the queue size is infinity
+...
+```
+
 You'll also need to enable the components.
 
 ```

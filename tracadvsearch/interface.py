@@ -66,3 +66,12 @@ class IAdvSearchBackend(Interface):
 		"""
 
 
+class IIndexer(Interface):
+	"""Interface to provides indexing process for PySolrSearchBackEnd."""
+
+	def upsert(self, doc):
+		"""Indexing to insert or update a document."""
+
+	def delete(self, identifier):
+		"""Indexing to remove a document."""
+

@@ -5,14 +5,192 @@ import datetime
 import itertools
 import locale
 import pysolr
+import sys
+import threading
 import time
+import Queue
+from operator import methodcaller
 
 from advsearch import SearchBackendException
 from interface import IAdvSearchBackend
+from interface import IIndexer
 from trac.config import ConfigurationError
 from trac.core import Component
 from trac.core import implements
 from trac.search import shorten_result
+
+CONFIG_SECTION_NAME = 'pysolr_search_backend'
+CONFIG_FIELD = {
+	'solr_url': (
+		CONFIG_SECTION_NAME,
+		'solr_url',
+		None,
+	),
+	'timeout': (
+		CONFIG_SECTION_NAME,
+		'timeout',
+		30,
+	),
+	'async_indexing': (
+		CONFIG_SECTION_NAME,
+		'async_indexing',
+		False,
+	),
+	'async_queue_maxsize': (
+		CONFIG_SECTION_NAME,
+		'async_queue_maxsize',
+		0,
+	),
+}
+
+
+def _get_incremental_value(initial, next_, step):
+	""" return incremental value in two stage
+	e.g.)
+		- step = 0 or 1, return 10
+		- step >= 2, return 30
+	>>> g = _get_incremental_value(10, 30, 2)
+	>>> g.next()
+	10
+	>>> g.next()
+	10
+	>>> g.next()
+	30
+	"""
+	for i in itertools.count():
+		if i < step:
+			yield initial
+		else:
+			yield next_
+
+
+class SolrIndexer(object):
+	"""Synchronous Indexer for PySolrSearchBackEnd."""
+	implements(IIndexer)
+
+	def __init__(self, backend):
+		self.backend = backend
+
+	def upsert(self, doc):
+		try:
+			self.backend.conn.add([doc])
+		except pysolr.SolrError, e:
+			raise SearchBackendException(e)
+
+	def delete(self, identifier):
+		try:
+			self.backend.conn.delete(id=identifier)
+		except pysolr.SolrError, e:
+			raise SearchBackendException(e)
+
+
+class SimpleLifoQueue(list):
+
+	def __init__(self, maxsize=0):
+		self.maxsize = maxsize
+
+	def put(self, item):
+		if self.maxsize > 0 and len(self) >= self.maxsize:
+			raise Queue.Full
+		self.append(item)
+
+	def get(self):
+		if len(self) > 0:
+			return self.pop()
+		return None
+
+	def empty(self):
+		return len(self) == 0
+
+
+class AsyncSolrIndexer(threading.Thread):
+	"""Asynchronous Indexer for PySolrSearchBackEnd."""
+	implements(IIndexer)
+
+	SLEEP_INTERVAL = (60, 3600, 10)
+
+	def __init__(self, backend, maxsize):
+		self.backend = backend
+		self.queue = Queue.Queue(maxsize)
+		self.recovery_queue = SimpleLifoQueue(maxsize)
+		threading.Thread.__init__(self)
+		self._name = self.__class__.__name__
+
+	def run(self):
+		prev_available = False
+		interval = self.interval_generator
+		while True:
+			while self.is_available():
+				while self.indexing():
+					if not prev_available:
+						interval = self.interval_generator  # reset
+						prev_available = True
+				else:
+					prev_available = False
+					time.sleep(interval.next())
+			else:
+				time.sleep(interval.next())
+
+	def indexing(self):
+		def get_item():
+			if self.recovery_queue.empty():
+				return self.queue.get(block=True)
+			else:
+				return self.recovery_queue.get()
+
+		result = True
+		try:
+			method_name, item = get_item()
+			methodcaller(method_name, item)(self)
+		except Exception, e:
+			result = False
+			self.backend.log.exception(e)
+			try:
+				self.recovery_queue.put((method_name, item))
+			except Queue.Full, e:
+				_msg = '%s: Recovery Queue is full, cannot put: %s'
+				self.backend.log.error(_msg % (self._name, item))
+		else:
+			self.queue.task_done()
+		return result
+
+	@property
+	def interval_generator(self):
+		return _get_incremental_value(*self.SLEEP_INTERVAL)
+
+	def is_available(self):
+		available = False
+		try:
+			path = '/admin/ping?wt=json'
+			res = self.backend.conn._send_request('get', path)
+			json = self.backend.conn.decoder.decode(res)
+			available = json.get('status') == 'OK'
+			if not available:
+				self.backend.log.warn('%s: Solr is not available: %s' % (self._name, r))
+		except Exception, e:
+			self.backend.log.error('%s: Solr may be down: %s' % (self._name, e))
+		return available
+
+	def upsert(self, doc):
+		try:
+			self.queue.put(('upsert_index', doc), block=False)
+		except Queue.Full, e:
+			self.backend.log.error('%s: Queue is full, cannot put: %s' % (self._name, doc))
+
+	def upsert_index(self, doc):
+		self.backend.log.debug('%s: upsert id=%s' % (self._name, doc.get('id')))
+		self.backend.conn.add([doc])
+
+	def delete(self, identifier):
+		try:
+			self.queue.put(('delete_index', identifier), block=False)
+		except Queue.Full, e:
+			self.backend.log.error('%s: Queue is full, cannot put: %s' % (self._name, identifier))
+
+	def delete_index(self, identifier):
+		self.backend.log.debug('%s: delete id=%s' % (self._name, identifier))
+		self.backend.conn.delete(id=identifier)
+
 
 class PySolrSearchBackEnd(Component):
 	"""AdvancedSearchBackend that uses pysolr lib to search Solr."""
@@ -25,11 +203,19 @@ class PySolrSearchBackEnd(Component):
 	SPECIAL_CHARACTERS = r'''+-&|!(){}[]^"~*?:\\'''
 
 	def __init__(self):
-		solr_url = self.config.get('pysolr_search_backend', 'solr_url', None)
-		timeout = self.config.getfloat('pysolr_search_backend', 'timeout', 30)
+		solr_url = self.config.get(*CONFIG_FIELD['solr_url'])
+		timeout = self.config.getfloat(*CONFIG_FIELD['timeout'])
 		if not solr_url:
 			raise ConfigurationError('PySolrSearchBackend must be configured in trac.ini')
 		self.conn = pysolr.Solr(solr_url, timeout=timeout)
+
+		self.async_indexing = self.config.getbool(*CONFIG_FIELD['async_indexing'])
+		if self.async_indexing:
+			maxsize = self.config.getint(*CONFIG_FIELD['async_queue_maxsize'])
+			self.indexer = AsyncSolrIndexer(self, maxsize)
+			self.indexer.start()
+		else:
+			self.indexer = SolrIndexer(self)
 
 	def get_name(self):
 		"""Return friendly name for this IAdvSearchBackend provider."""
@@ -40,16 +226,10 @@ class PySolrSearchBackEnd(Component):
 
 	def upsert_document(self, doc):
 		doc['time'] = doc['time'].strftime(self.SOLR_DATE_FORMAT)
-		try:
-			self.conn.add([doc])
-		except pysolr.SolrError, e:
-			raise SearchBackendException(e)
+		self.indexer.upsert(doc)
 
 	def delete_document(self, identifier):
-		try:
-			self.conn.delete(id=identifier)
-		except pysolr.SolrError, e:
-			raise SearchBackendException(e)
+		self.indexer.delete(identifier)
 
 	def query_backend(self, criteria):
 		"""Send a query to solr."""

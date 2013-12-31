@@ -1,0 +1,67 @@
+<!--
+  Data Import Configuration
+
+  This will load all your existing ticket and wiki data into the solr index.
+  If you use a database other then sqlite you may need to change the queries
+  slightly. You will likely have to change the connection url as well.
+
+  To start this data import hit the following url (assumes solr is running
+  on the default port on localhost):
+  http://localhost:8983/solr/dataimport?command=full-import
+
+  For more details see:
+  http://wiki.apache.org/solr/DataImportHandler
+-->
+<dataConfig>
+
+	<dataSource
+		type="JdbcDataSource"
+		driver="org.sqlite.JDBC"
+		url="jdbc:sqlite:/path/to/db/trac.db"
+		batchSize="1000"
+	/>
+
+	<document>
+		<entity
+			name="wiki"
+			query="select
+				name,
+				version,
+				replace(datetime(round(time/1000000), 'unixepoch'), ' ', 'T')||'Z' AS time,
+				author,
+				text,
+				comment,
+				'wiki_'||name as id,
+				'wiki' as source
+				from wiki
+				order by time asc">
+		</entity>
+		<entity
+			name="ticket"
+			query="select
+				'ticket_'||id as id,
+				id as ticket_id,
+				'ticket' as source,
+				type,
+				replace(datetime(round(t.time/1000000), 'unixepoch'), ' ', 'T')||'Z' AS time,
+				replace(datetime(round(t.changetime/1000000), 'unixepoch'), ' ', 'T')||'Z' AS changetime,
+				component,
+				severity,
+				priority,
+				owner,
+				cc,
+				reporter as author,
+				version as ticket_version,
+				milestone,
+				status,
+				resolution,
+				summary as name,
+				keywords,
+				description||group_concat(newvalue, ' ') as text
+				FROM ticket as t LEFT JOIN ticket_change as tc ON t.id=tc.ticket and tc.field='comment'
+				GROUP BY t.id
+				">
+		</entity>
+	</document>
+
+</dataConfig>
