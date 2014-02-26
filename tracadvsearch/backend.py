@@ -2,6 +2,7 @@
 Backends for TracAdvancedSearchPlugin which implement IAdvSearchBackend.
 """
 import datetime
+import inspect
 import itertools
 import locale
 import pysolr
@@ -115,8 +116,25 @@ class AsyncSolrIndexer(threading.Thread):
 		self.recovery_queue = SimpleLifoQueue(maxsize)
 		threading.Thread.__init__(self)
 		self._name = self.__class__.__name__
+		self._is_executed_by_command = self.is_executed_by_command()
+
+	def is_executed_by_command(self):
+		""" HACK: check whether indexing has invoked by trac-admin command
+
+		AdminCommandManager calls execute_command function to run command.
+		This is quick fix, so it should be replaced with more appropriate way.
+		"""
+		# frame tuple is:
+		#   (frame object, filename, lineno, function, code_context, index)
+		frames = inspect.getouterframes(inspect.currentframe(), 0)
+		return any(frame[3] == 'execute_command' for frame in frames)
 
 	def run(self):
+		if self._is_executed_by_command:
+			while self.indexing() and not self.queue.empty():
+				pass
+			return
+
 		prev_available = False
 		interval = self.interval_generator
 		while True:
