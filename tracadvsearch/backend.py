@@ -117,6 +117,11 @@ class AsyncSolrIndexer(threading.Thread):
 		self._name = self.__class__.__name__
 
 	def run(self):
+		if self.is_executed_by_trac_admin:
+			while self.indexing() and not self.queue.empty():
+				pass
+			return
+
 		prev_available = False
 		interval = self.interval_generator
 		while True:
@@ -153,6 +158,18 @@ class AsyncSolrIndexer(threading.Thread):
 		else:
 			self.queue.task_done()
 		return result
+
+	@property
+	def is_executed_by_trac_admin(self):
+		""" check whether indexing has invoked by trac-admin command
+
+		see below
+		https://github.com/dnephin/TracAdvancedSearchPlugin/pull/27
+		"""
+		rv = False
+		if len(sys.argv) >= 1:
+			rv = sys.argv[0].find('trac-admin') != -1
+		return rv
 
 	@property
 	def interval_generator(self):
