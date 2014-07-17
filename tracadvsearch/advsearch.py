@@ -399,6 +399,12 @@ class AdvancedSearchPlugin(Component):
 	def ticket_changed(self, ticket, comment, author, old_values):
 		self.ticket_created(ticket)
 
+	def ticket_comment_modified(self, ticket, cdate, author, comment, old_comment):
+		self.ticket_created(ticket)
+
+	def ticket_change_deleted(self, ticket, cdate, changes):
+		self.ticket_created(ticket)
+
 
 class StartPoints(object):
 	"""Format and parse start points for search."""
